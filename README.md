@@ -19,7 +19,7 @@ Typical uses are comparing beam patterns, checking how aim or load changes the r
 
 **Open it in the browser: https://jalibakthermk.github.io/Road-illuminate/**
 
-The web tool (`docs/index.html`) does the same calculation without installing anything:
+The web tool (`index.html`, with an identical copy in `docs/index.html` so GitHub Pages works from either the root or the /docs folder) does the same calculation without installing anything:
 
 - Load or drag in IES files for the left lamp, and optionally a separate or mirrored right lamp. Files are read in the browser and never uploaded.
 - Set the mounting height, lamp separation, aim, toe, and vehicle pitch and roll.

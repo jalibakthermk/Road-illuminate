@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Headlamp road illuminance from IES H-V photometry: mounting height, aim, toe, pitch and roll, lane markings and customer requirement checks.">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Road Illuminate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: instrument console. Control rail on the left, a dark photometric "well" for the road plot,
+   results and customer checks stacked beneath it. Stacks to one column on phones. */
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --field:#f6f8fa; --ink:#121a21; --muted:#5a6672; --line:#d6dce2;
+  --accent:#b3620b; --accent-ink:#ffffff; --accent-soft:#f6e7d4;
+  --pass:#1d7a4b; --pass-soft:#dcf1e5; --fail:#b3261e; --fail-soft:#f8dedb; --warn:#8a6100;
+  --well:#0c0f13; --well-ink:#a9b4bf;
+  --f-ui:"Archivo",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1216; --panel:#151a20; --field:#10151a; --ink:#e5eaef; --muted:#93a0ac; --line:#28313a;
+  --accent:#f0a33a; --accent-ink:#1b1206; --accent-soft:#3a2a14;
+  --pass:#4fc48b; --pass-soft:#123222; --fail:#ff7d73; --fail-soft:#3b1716; --warn:#e8c25a;
+  --well:#090b0e; --well-ink:#a9b4bf; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0e1216; --panel:#151a20; --field:#10151a; --ink:#e5eaef; --muted:#93a0ac; --line:#28313a;
+  --accent:#f0a33a; --accent-ink:#1b1206; --accent-soft:#3a2a14;
+  --pass:#4fc48b; --pass-soft:#123222; --fail:#ff7d73; --fail-soft:#3b1716; --warn:#e8c25a;
+  --well:#090b0e; --well-ink:#a9b4bf; color-scheme:dark;}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-ui);font-size:14px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+*{box-sizing:border-box}
+h1,h2,h3{margin:0;text-wrap:balance}
+.mono,input[type=number],.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px;max-width:1500px;margin:0 auto 14px}
+.brand h1{font-size:22px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.brand h1 .beam{width:26px;height:14px;display:inline-block;background:linear-gradient(90deg,var(--accent),transparent);clip-path:polygon(0 35%,100% 0,100% 100%,0 65%);border-left:4px solid var(--accent)}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.status{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);white-space:nowrap}
+.chip b{color:var(--ink);font-weight:600}
+.chip.pass{background:var(--pass-soft);color:var(--pass);border-color:transparent}
+.chip.fail{background:var(--fail-soft);color:var(--fail);border-color:transparent}
+.chip.ex{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.app{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;max-width:1500px;margin:0 auto;align-items:start}
+@media (max-width:920px){.app{grid-template-columns:minmax(0,1fr)} main{order:-1}}
+aside.rail{display:flex;flex-direction:column;gap:10px;min-width:0}
+details.sec{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+details.sec>summary{list-style:none;cursor:pointer;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
+details.sec[open]>summary::after{transform:rotate(-135deg)}
+details.sec>summary .hint{font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:12px;margin-left:auto;margin-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.sec-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.field>span{font-size:12px;color:var(--muted)}
+.field>span em{font-style:normal;color:var(--ink);opacity:.55;font-family:var(--f-mono);font-size:11px}
+.inp{position:relative;display:flex}
+input[type=number],input[type=text],select,textarea{width:100%;min-width:0;font:inherit;font-size:13px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+input[type=number]{padding-right:34px}
+.inp .u{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);font-family:var(--f-mono);pointer-events:none}
+textarea{font-family:var(--f-mono);font-size:12px;min-height:110px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+label.check{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+label.check input{accent-color:var(--accent);width:15px;height:15px}
+.drop{border:1.5px dashed var(--line);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.drop .lbl{font-size:12px;color:var(--muted)}
+.drop .fname{font-family:var(--f-mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta{font-family:var(--f-mono);font-size:11px;color:var(--muted);line-height:1.6}
+.err{color:var(--fail);font-size:12px}
+.btn{font:inherit;font-size:12.5px;font-weight:600;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 10px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:4px 6px}
+.btn.ghost:hover{color:var(--fail)}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.filebtn{position:relative;overflow:hidden}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.mk-table,.req-table,.res-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.mk-list{display:flex;flex-direction:column;gap:8px}
+.mk{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:4px 6px;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.mk .nm{grid-column:1/4}
+.mk input,.mk select{padding:4px 6px;font-size:12px}
+.mk input[type=number]{padding-right:6px}
+.swatch{width:10px;height:10px;border-radius:2px;display:inline-block;border:1px solid var(--line)}
+main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.card-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.card-h h2{font-size:15px;font-weight:600}
+.card-h .sub{color:var(--muted);font-size:12.5px}
+.well{background:var(--well);border-radius:0 0 var(--r) var(--r);padding:10px 10px 12px;color:var(--well-ink)}
+.readout{display:flex;flex-wrap:wrap;gap:4px 18px;font-family:var(--f-mono);font-size:12px;min-height:20px;padding:0 4px 6px;color:var(--well-ink)}
+.readout b{color:#f2f5f8;font-weight:500}
+.plotwrap{position:relative;width:100%;height:clamp(300px,52vh,520px)}
+#plot{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
+.legend{display:flex;align-items:center;gap:10px;padding:10px 4px 0;font-family:var(--f-mono);font-size:11px}
+.legend .bar{position:relative;flex:1;height:10px;border-radius:2px;min-width:0}
+.legend .ticks{position:relative;height:14px;margin-top:3px}
+.legend .ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.legend .lbar{flex:1;min-width:0}
+.plot-tools{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.plot-tools label.check{font-size:12.5px}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;padding:14px 16px}
+.res-grid h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px}
+.res-table th{text-align:left;font-weight:500;color:var(--muted);font-size:11.5px;padding:4px 6px;border-bottom:1px solid var(--line)}
+.res-table td{padding:5px 6px;border-bottom:1px solid var(--line)}
+.res-table td.num,.res-table th.num{text-align:right}
+.res-table tr:last-child td{border-bottom:0}
+.kpis{display:flex;flex-wrap:wrap;gap:6px 22px;padding:12px 16px 0}
+.kpi{display:flex;flex-direction:column}
+.kpi span{font-size:11.5px;color:var(--muted)}
+.kpi b{font-family:var(--f-mono);font-size:17px;font-weight:500}
+.tblwrap{overflow-x:auto}
+.req-table th{text-align:left;font-weight:500;color:var(--muted);font-size:11.5px;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.req-table td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.req-table td input,.req-table td select{padding:4px 6px;font-size:12px}
+.req-table .params{display:flex;flex-wrap:wrap;gap:4px 8px}
+.req-table .params label{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--muted);font-family:var(--f-mono)}
+.req-table .params input{width:68px;padding-right:6px}
+.req-table .params select{width:auto}
+.req-table td.meas{font-family:var(--f-mono);text-align:right;white-space:nowrap}
+.req-table .lim{display:flex;gap:4px;align-items:center}
+.req-table .lim select{width:52px}
+.req-table .lim input{width:72px;padding-right:6px}
+.req-table input.lab{min-width:170px}
+.req-table select[data-k=type]{min-width:84px}
+.req-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:12px 16px}
+.empty{padding:22px 16px;color:var(--muted);font-size:13px}
+.note{font-size:12px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <h1><span class="beam" aria-hidden="true"></span>Road Illuminate</h1>
+    <p>Headlamp illuminance on the road from IES H-V photometry, with mounting, aim and vehicle attitude.</p>
+  </div>
+  <div class="status" id="status"></div>
+</header>
+
+<div class="app">
+<aside class="rail">
+
+  <details class="sec" open id="sec-photo">
+    <summary>Photometry <span class="hint" id="hint-photo"></span></summary>
+    <div class="sec-body">
+      <div class="drop" id="dropL">
+        <div class="row"><span class="lbl">Left lamp (or both lamps)</span>
+          <span class="btn filebtn">Load IES<input type="file" id="fileL" accept=".ies,.IES,.txt"></span></div>
+        <div class="fname" id="nameL">—</div>
+        <div class="meta" id="metaL"></div>
+        <div class="err" id="errL" hidden></div>
+      </div>
+      <div class="drop" id="dropR">
+        <div class="row"><span class="lbl">Right lamp (optional)</span>
+          <span class="btns"><button class="btn ghost" id="clearR" type="button" hidden>Remove</button>
+          <span class="btn filebtn">Load IES<input type="file" id="fileR" accept=".ies,.IES,.txt"></span></span></div>
+        <div class="fname" id="nameR">Uses the left file</div>
+        <div class="meta" id="metaR"></div>
+        <div class="err" id="errR" hidden></div>
+      </div>
+      <label class="check"><input type="checkbox" id="mirrorRight">Right lamp is the left file mirrored</label>
+      <label class="check"><input type="checkbox" id="mirrorAll">Mirror beam (convert RHT ↔ LHT)</label>
+      <div class="grid2">
+        <label class="field"><span>Angle system</span>
+          <select id="angleSys"><option value="azel">H then V (azel)</option><option value="elaz">V then H (elaz)</option></select></label>
+        <label class="field"><span>Lamps shown</span>
+          <select id="only"><option value="both">Both</option><option value="left">Left only</option><option value="right">Right only</option></select></label>
+        <label class="field"><span>Intensity factor</span><div class="inp"><input type="number" id="scale" step="0.05" min="0"><span class="u">×</span></div></label>
+      </div>
+      <p class="note">Drop an .ies file on a box or use Load IES. Files are read in your browser and never uploaded.</p>
+    </div>
+  </details>
+
+  <details class="sec" open id="sec-mount">
+    <summary>Mounting &amp; orientation <span class="hint" id="hint-mount"></span></summary>
+    <div class="sec-body">
+      <div class="grid2">
+        <label class="field"><span>Mounting height</span><div class="inp"><input type="number" id="height" step="0.01" min="0.05"><span class="u">m</span></div></label>
+        <label class="field"><span>Lamp separation</span><div class="inp"><input type="number" id="sep" step="0.01" min="0"><span class="u">m</span></div></label>
+        <label class="field"><span>Vertical aim <em>− down</em></span><div class="inp"><input type="number" id="aim" step="0.1"><span class="u">%</span></div></label>
+        <label class="field"><span>Toe <em>+ outward</em></span><div class="inp"><input type="number" id="toe" step="0.1"><span class="u">°</span></div></label>
+        <label class="field"><span>Vehicle pitch <em>+ nose up</em></span><div class="inp"><input type="number" id="pitch" step="0.1"><span class="u">°</span></div></label>
+        <label class="field"><span>Vehicle roll <em>+ left up</em></span><div class="inp"><input type="number" id="roll" step="0.1"><span class="u">°</span></div></label>
+        <label class="field"><span>Pitch pivot x <em>rear axle &lt; 0</em></span><div class="inp"><input type="number" id="pivot" step="0.1"><span class="u">m</span></div></label>
+      </div>
+      <div class="meta" id="geomInfo"></div>
+    </div>
+  </details>
+
+  <details class="sec" open id="sec-road">
+    <summary>Road &amp; lane markings <span class="hint" id="hint-road"></span></summary>
+    <div class="sec-body">
+      <div class="grid2">
+        <label class="field"><span>Traffic side</span><select id="side"><option value="RHT">Right-hand (RHT)</option><option value="LHT">Left-hand (LHT)</option></select></label>
+        <label class="field"><span>Lane width</span><div class="inp"><input type="number" id="laneW" step="0.05" min="2"><span class="u">m</span></div></label>
+        <label class="field"><span>Lanes, own direction</span><input type="number" id="ownN" step="1" min="1" max="5"></label>
+        <label class="field"><span>Lanes, oncoming</span><input type="number" id="oppN" step="1" min="0" max="5"></label>
+        <label class="field"><span>Vehicle lane <em>1 = kerb lane</em></span><input type="number" id="vehLane" step="1" min="1" max="5"></label>
+        <label class="field"><span>Offset in lane <em>+ left</em></span><div class="inp"><input type="number" id="laneOff" step="0.05"><span class="u">m</span></div></label>
+        <label class="field"><span>Centre line</span><select id="centre"><option value="dashed">Dashed</option><option value="solid">Solid</option><option value="double">Double solid</option></select></label>
+        <label class="field"><span>Centre line colour</span><select id="centreCol"><option value="white">White</option><option value="yellow">Yellow</option></select></label>
+      </div>
+      <div class="btns"><button class="btn primary" type="button" id="genRoad">Rebuild markings from layout</button></div>
+      <div class="mk-list" id="mkBody" aria-label="Lane markings"></div>
+      <div class="btns"><button class="btn" type="button" id="addMk">Add line</button></div>
+      <p class="note">y is measured from the vehicle centreline, positive to the left. Edit any line after rebuilding.</p>
+    </div>
+  </details>
+
+  <details class="sec" id="sec-plot">
+    <summary>Plot &amp; evaluation <span class="hint" id="hint-plot"></span></summary>
+    <div class="sec-body">
+      <div class="grid2">
+        <label class="field"><span>Distance ahead</span><div class="inp"><input type="number" id="xmax" step="5" min="10"><span class="u">m</span></div></label>
+        <label class="field"><span>Auto-fit lateral view</span><select id="yfit"><option value="road">To road edges</option><option value="manual">Manual</option></select></label>
+        <label class="field"><span>Right limit</span><div class="inp"><input type="number" id="ymin" step="0.5"><span class="u">m</span></div></label>
+        <label class="field"><span>Left limit</span><div class="inp"><input type="number" id="ymax" step="0.5"><span class="u">m</span></div></label>
+      </div>
+      <label class="field"><span>Isolux lines</span><input type="text" id="levels" class="mono"></label>
+      <label class="field"><span>Range &amp; width thresholds</span><input type="text" id="thr" class="mono"></label>
+      <label class="field"><span>Width at distances</span><input type="text" id="widthX" class="mono"></label>
+    </div>
+  </details>
+
+</aside>
+
+<main>
+  <section class="card" aria-labelledby="plot-h">
+    <div class="card-h">
+      <div><h2 id="plot-h">Road isolux, top view</h2><div class="sub" id="plotSub"></div></div>
+      <div class="plot-tools">
+        <label class="check"><input type="checkbox" id="showContours" checked>Isolux lines</label>
+        <label class="check"><input type="checkbox" id="showReqs" checked>Checks on plot</label>
+        <button class="btn" type="button" id="copyCsv">Copy grid as CSV</button>
+      </div>
+    </div>
+    <div class="well">
+      <div class="readout" id="readout"><span>Move over the plot to read illuminance</span></div>
+      <div class="plotwrap"><canvas id="plot" aria-label="Isolux plot of road illuminance"></canvas></div>
+      <div class="legend"><span>lx</span><div class="lbar"><div class="bar" id="legBar"></div><div class="ticks" id="legTicks"></div></div></div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="res-grid">
+      <div><h3>Range along lines</h3><div class="tblwrap"><table class="res-table" id="rangeTbl"></table></div></div>
+      <div><h3>Lit width</h3><div class="tblwrap"><table class="res-table" id="widthTbl"></table></div></div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="req-h">
+    <div class="card-h">
+      <div><h2 id="req-h">Customer requirement checks</h2><div class="sub">Each check is evaluated live against the current beam and mounting.</div></div>
+      <div class="status" id="reqSummary"></div>
+    </div>
+    <div class="tblwrap">
+      <table class="req-table">
+        <thead><tr><th>#</th><th>Requirement</th><th>Type</th><th>Where</th><th>Limit</th><th style="text-align:right">Measured</th><th>Result</th><th></th></tr></thead>
+        <tbody id="reqBody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="reqEmpty" hidden>No checks yet. Add a point, range, width or zone check, or paste a requirement set as JSON.</div>
+    <div class="req-foot">
+      <div class="btns">
+        <button class="btn" type="button" data-add="point">+ Point</button>
+        <button class="btn" type="button" data-add="range">+ Range</button>
+        <button class="btn" type="button" data-add="width">+ Width</button>
+        <button class="btn" type="button" data-add="zone">+ Zone</button>
+      </div>
+      <div class="btns">
+        <button class="btn" type="button" id="loadExample">Load example set</button>
+        <button class="btn" type="button" id="clearReqs">Clear all</button>
+      </div>
+    </div>
+    <details class="sec" style="border:0;border-top:1px solid var(--line);border-radius:0 0 var(--r) var(--r)">
+      <summary>Import / export requirement set (JSON)</summary>
+      <div class="sec-body">
+        <textarea id="reqJson" spellcheck="false" aria-label="Requirement set JSON"></textarea>
+        <div class="btns"><button class="btn" type="button" id="copyJson">Copy current set</button><button class="btn primary" type="button" id="applyJson">Replace checks with this JSON</button></div>
+        <div class="err" id="jsonErr" hidden></div>
+        <p class="note">Format: a list of objects with <span class="mono">type</span> (point, range, width, zone), the position fields, <span class="mono">op</span> (">=" or "&lt;=") and <span class="mono">limit</span>. Keep one file per customer specification.</p>
+      </div>
+    </details>
+  </section>
+</main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(()=>{
+"use strict";
+const $=s=>document.querySelector(s);
+const D2R=Math.PI/180;
+const STORE="road-illuminate-v1";
+const fmt=(v,d=1)=>Number.isFinite(v)?v.toFixed(d).replace("-","−"):"—";
+
+/* ------------------------------------------------------------------ IES */
+function parseIES(text,name){
+  const lines=text.split(/\r?\n/);
+  let i=0; while(i<lines.length && !/^\s*TILT\s*=/i.test(lines[i])) i++;
+  if(i>=lines.length) throw new Error("No TILT= line found, so this is not an IES LM-63 file.");
+  const tilt=lines[i].split("=")[1].trim().toUpperCase();
+  const nums=lines.slice(i+1).join(" ").replace(/,/g," ").trim().split(/\s+/).map(Number);
+  let p=0;
+  if(tilt==="INCLUDE"){p+=1; const n=nums[p]; p+=1+2*n;}
+  const head=nums.slice(p,p+10); p+=10;
+  const nv=head[3]|0, nh=head[4]|0, ptype=head[5]|0, mult=head[2];
+  const ballast=nums[p]; p+=3;
+  if(!(nv>1&&nh>0)) throw new Error("The angle counts in the file header are not valid.");
+  const V=nums.slice(p,p+nv); p+=nv;
+  const H=nums.slice(p,p+nh); p+=nh;
+  const cd=nums.slice(p,p+nv*nh);
+  if(cd.length<nv*nh||cd.some(x=>!Number.isFinite(x))) throw new Error("The candela table is incomplete or has unreadable values.");
+  if(ptype===1) throw new Error("This file uses Type C photometry (a luminaire). Headlamps need H-V photometry (Type A or B). Re-export the file with H-V angles.");
+  const k=(Number.isFinite(mult)?mult:1)*(Number.isFinite(ballast)&&ballast>0?ballast:1);
+  const rows=[]; for(let h=0;h<nh;h++) rows.push(cd.slice(h*nv,(h+1)*nv).map(x=>x*k));
+  return {name,H,V,rows,ptype};
+}
+function prepare(raw,mirror){
+  let H=raw.H.slice(), rows=raw.rows.map(r=>r.slice());
+  if(H.length>1 && H[0]>=0){ // laterally symmetric file, mirror to negative H
+    if(H[0]===0){H=H.slice(1).reverse().map(x=>-x).concat(H); rows=rows.slice(1).reverse().concat(rows);}
+    else {H=H.slice().reverse().map(x=>-x).concat(H); rows=rows.slice().reverse().concat(rows);}
+  }
+  if(mirror){H=H.map(x=>-x).reverse(); rows=rows.slice().reverse();}
+  const hi=H.map((v,i)=>i).sort((a,b)=>H[a]-H[b]);
+  const vi=raw.V.map((v,i)=>i).sort((a,b)=>raw.V[a]-raw.V[b]);
+  const Hs=Float64Array.from(hi.map(i=>H[i])), Vs=Float64Array.from(vi.map(i=>raw.V[i]));
+  const nv=Vs.length, cd=new Float64Array(Hs.length*nv); let peak=0,pH=0,pV=0;
+  hi.forEach((h,a)=>vi.forEach((v,b)=>{const c=rows[h][v]; cd[a*nv+b]=c; if(c>peak){peak=c;pH=Hs[a];pV=Vs[b];}}));
+  return {Hs,Vs,cd,nv,peak,pH,pV};
+}
+function bs(a,x){let lo=0,hi=a.length-2; if(x<=a[0])return 0; if(x>=a[hi+1])return hi; while(lo<hi){const m=(lo+hi+1)>>1; if(a[m]<=x)lo=m; else hi=m-1;} return lo;}
+function intensity(L,H,V){
+  const hs=L.Hs,vs=L.Vs;
+  if(H<hs[0]||H>hs[hs.length-1]||V<vs[0]||V>vs[vs.length-1]) return 0;
+  if(hs.length===1){const j=bs(vs,V), tv=(V-vs[j])/(vs[j+1]-vs[j]); return L.cd[j]*(1-tv)+L.cd[j+1]*tv;}
+  const i=bs(hs,H), j=bs(vs,V), nv=L.nv;
+  const th=(H-hs[i])/(hs[i+1]-hs[i]), tv=(V-vs[j])/(vs[j+1]-vs[j]);
+  const c=L.cd, a=i*nv+j, b=(i+1)*nv+j;
+  return (1-th)*(1-tv)*c[a]+th*(1-tv)*c[b]+(1-th)*tv*c[a+1]+th*tv*c[b+1];
+}
+function flux(L,sys){
+  const dh=0.5,dv=0.25; let s=0;
+  for(let H=L.Hs[0]+dh/2;H<L.Hs[L.Hs.length-1];H+=dh) for(let V=L.Vs[0]+dv/2;V<L.Vs[L.Vs.length-1];V+=dv)
+    s+=intensity(L,H,V)*Math.cos((sys==="azel"?V:H)*D2R);
+  return s*dh*dv*D2R*D2R;
+}
+
+/* Synthetic RHT low beam so the tool opens in a working state */
+function sampleIES(){
+  const H=[],V=[];for(let h=-45;h<=45.0001;h+=0.5)H.push(+h.toFixed(2));for(let v=-20;v<=10.0001;v+=0.25)V.push(+v.toFixed(2));
+  const sig=x=>1/(1+Math.exp(-x));
+  const rows=H.map(h=>V.map(v=>{
+    const vc=h<=0?0:Math.min(h*Math.tan(15*D2R),1.0);
+    const below=sig((vc-v)/0.12);
+    const hot=26000*Math.exp(-(((h-2)/6.5)**2)-(((v+1.3)/1.6)**2));
+    const spread=5200*Math.exp(-((h/24)**2)-(((v+4.5)/5)**2));
+    const fore=1500*Math.exp(-((h/38)**2))*sig((-v-6)/2);
+    return (hot+spread+fore)*below+180*(1-below)*Math.exp(-Math.max(0,v-vc)/3);
+  }));
+  return {name:"Sample low beam (synthetic, RHT)",H,V,rows,ptype:2,sample:true};
+}
+
+/* ------------------------------------------------------------------ state */
+const DEFAULT={
+  height:0.65,sep:1.4,aim:-1.0,toe:0,pitch:0,roll:0,pivot:-2.7,scale:1,angleSys:"azel",only:"both",mirrorRight:false,mirrorAll:false,
+  side:"RHT",laneW:3.5,ownN:1,oppN:1,vehLane:1,laneOff:0,centre:"dashed",centreCol:"white",
+  xmax:100,yfit:"road",ymin:-6,ymax:9,levels:"0.5, 1, 2, 3, 5, 10, 20, 50",thr:"1, 3",widthX:"10, 20, 30, 50",
+  showContours:true,showReqs:true,markings:null,reqs:null,reqsExample:true
+};
+let S=Object.assign({},DEFAULT);
+let rawL=null, rawR=null, textL=null, textR=null;
+try{const j=JSON.parse(localStorage.getItem(STORE)||"null"); if(j&&typeof j==="object"){Object.assign(S,j.S||{}); textL=j.textL||null; textR=j.textR||null;}}catch(e){}
+function save(){try{const o={S}; if(textL&&textL.length<1.5e6)o.textL=textL; if(textR&&textR.length<1.5e6)o.textR=textR; localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
+
+function loadText(which,text,name,silent){
+  const err=$(which==="L"?"#errL":"#errR");
+  try{
+    const raw=parseIES(text,name);
+    if(which==="L"){rawL=raw;textL=text;}else{rawR=raw;textR=text;}
+    err.hidden=true; return true;
+  }catch(e){ if(!silent){err.textContent=e.message; err.hidden=false;} return false; }
+}
+if(textL) loadText("L",textL,(()=>{try{return JSON.parse(localStorage.getItem(STORE)).S.nameL}catch(e){return "Saved file"}})(),true);
+if(textR) loadText("R",textR,(()=>{try{return JSON.parse(localStorage.getItem(STORE)).S.nameR}catch(e){return "Saved file"}})(),true);
+if(!rawL){rawL=sampleIES(); textL=null;}
+
+/* ------------------------------------------------------------------ geometry */
+function mul(A,B){const C=[];for(let i=0;i<3;i++){C.push([]);for(let j=0;j<3;j++)C[i].push(A[i][0]*B[0][j]+A[i][1]*B[1][j]+A[i][2]*B[2][j]);}return C;}
+function mv(A,v){return [A[0][0]*v[0]+A[0][1]*v[1]+A[0][2]*v[2],A[1][0]*v[0]+A[1][1]*v[1]+A[1][2]*v[2],A[2][0]*v[0]+A[2][1]*v[1]+A[2][2]*v[2]];}
+const rotX=a=>{const c=Math.cos(a),s=Math.sin(a);return [[1,0,0],[0,c,-s],[0,s,c]];};
+const rotNose=a=>{const c=Math.cos(a),s=Math.sin(a);return [[c,0,-s],[0,1,0],[s,0,c]];};
+function lampAxes(aimPct,yawDeg){
+  const el=Math.atan(aimPct/100), ps=yawDeg*D2R;
+  const f=[Math.cos(el)*Math.cos(ps),Math.cos(el)*Math.sin(ps),Math.sin(el)];
+  const l=[-Math.sin(ps),Math.cos(ps),0];
+  const u=[f[1]*l[2]-f[2]*l[1],f[2]*l[0]-f[0]*l[2],f[0]*l[1]-f[1]*l[0]];
+  return {f,l,u};
+}
+let LAMPS=[], PL=null, PR=null;
+function buildLamps(){
+  PL=prepare(rawL,S.mirrorAll);
+  if(rawR) PR=prepare(rawR,S.mirrorAll);
+  else if(S.mirrorRight) PR=prepare(rawL,!S.mirrorAll);
+  else PR=PL;
+  const R=mul(rotX(S.roll*D2R),rotNose(S.pitch*D2R));
+  const piv=[S.pivot,0,0], half=S.sep/2;
+  LAMPS=[];
+  for(const [name,y,yaw,P] of [["left",half,S.toe,PL],["right",-half,-S.toe,PR]]){
+    if(S.only!=="both"&&S.only!==name) continue;
+    const p0=[0-piv[0],y,S.height], pr=mv(R,p0), pos=[pr[0]+piv[0],pr[1],pr[2]];
+    const ax=lampAxes(S.aim,yaw);
+    LAMPS.push({name,px:pos[0],py:pos[1],pz:pos[2],f:mv(R,ax.f),l:mv(R,ax.l),u:mv(R,ax.u),P});
+  }
+}
+function Eat(x,y){
+  let E=0; const az=S.angleSys==="azel";
+  for(const L of LAMPS){
+    if(L.pz<=0) continue;
+    const vx=x-L.px, vy=y-L.py, vz=-L.pz;
+    const f=L.f[0]*vx+L.f[1]*vy+L.f[2]*vz; if(f<=0) continue;
+    const l=L.l[0]*vx+L.l[1]*vy+L.l[2]*vz, u=L.u[0]*vx+L.u[1]*vy+L.u[2]*vz;
+    let H,V; if(az){H=Math.atan2(-l,f)/D2R;V=Math.atan2(u,Math.hypot(f,l))/D2R;} else {V=Math.atan2(u,f)/D2R;H=Math.atan2(-l,Math.hypot(f,u))/D2R;}
+    const I=intensity(L.P,H,V); if(!I) continue;
+    const D2=vx*vx+vy*vy+vz*vz;
+    E+=I*L.pz/(D2*Math.sqrt(D2));
+  }
+  return E*S.scale;
+}
+function lampHV(L,x,y){
+  const vx=x-L.px, vy=y-L.py, vz=-L.pz;
+  const f=L.f[0]*vx+L.f[1]*vy+L.f[2]*vz, l=L.l[0]*vx+L.l[1]*vy+L.l[2]*vz, u=L.u[0]*vx+L.u[1]*vy+L.u[2]*vz;
+  if(S.angleSys==="azel") return [Math.atan2(-l,f)/D2R,Math.atan2(u,Math.hypot(f,l))/D2R];
+  return [Math.atan2(-l,Math.hypot(f,u))/D2R,Math.atan2(u,f)/D2R];
+}
+
+/* ------------------------------------------------------------------ road */
+function buildMarkings(){
+  const W=S.laneW,n=Math.max(1,S.ownN|0),m=Math.max(0,S.oppN|0),k=Math.min(Math.max(1,S.vehLane|0),n);
+  const yc=n*W-(k-0.5)*W-S.laneOff, mk=[];
+  const sgn=S.side==="RHT"?1:-1, near=S.side==="RHT"?"Right":"Left", far=S.side==="RHT"?"Left":"Right";
+  mk.push({name:`${near} edge`,y:sgn*(yc-n*W),style:"solid",color:"white"});
+  for(let i=1;i<n;i++) mk.push({name:"Lane line",y:sgn*(yc-i*W),style:"dashed",color:"white"});
+  if(m>0){
+    mk.push({name:"Centre line",y:sgn*yc,style:S.centre,color:S.centreCol});
+    for(let i=1;i<m;i++) mk.push({name:"Oncoming lane line",y:sgn*(yc+i*W),style:"dashed",color:"white"});
+    mk.push({name:`${far} edge`,y:sgn*(yc+m*W),style:"solid",color:"white"});
+  } else mk.push({name:`${far} edge`,y:sgn*yc,style:"solid",color:S.centreCol});
+  mk.forEach(o=>o.y=+o.y.toFixed(3));
+  S.markings=mk;
+}
+function fitY(){
+  if(S.yfit!=="road"||!S.markings||!S.markings.length) return;
+  const ys=S.markings.map(m=>m.y);
+  S.ymin=+(Math.min(...ys)-4).toFixed(1); S.ymax=+(Math.max(...ys)+4).toFixed(1);
+  $("#ymin").value=S.ymin; $("#ymax").value=S.ymax;
+}
+if(!S.markings) buildMarkings();
+
+/* ------------------------------------------------------------------ requirements */
+let reqSeq=1;
+function exampleReqs(){
+  return [
+    {label:"Illuminance 25 m ahead on vehicle axis",type:"point",x:25,y:0,op:">=",limit:1.5},
+    {label:"Kerb-side reach, 1 lx along right edge",type:"range",y:-1.75,thr:1,op:">=",limit:35},
+    {label:"Reach on vehicle axis, 3 lx",type:"range",y:0,thr:3,op:">=",limit:20},
+    {label:"Foreground spread, 1 lx width at 10 m",type:"width",x:10,thr:1,op:">=",limit:10},
+    {label:"Oncoming lane, 50–100 m, glare on road",type:"zone",x1:50,x2:100,y1:1.75,y2:5.25,stat:"max",op:"<=",limit:1}
+  ];
+}
+if(!S.reqs) S.reqs=exampleReqs();
+const ensureIds=()=>S.reqs.forEach(r=>{if(!r.id) r.id=reqSeq++; else reqSeq=Math.max(reqSeq,r.id+1);});
+ensureIds();
+
+function rangeOn(y,thr,xMax=300,dx=0.1){let last=null; for(let x=0;x<=xMax;x+=dx){if(Eat(x,y)>=thr) last=x;} return last;}
+function widthAt(x,thr,lim=40,dy=0.05){let a=null,b=null; for(let y=-lim;y<=lim;y+=dy){if(Eat(x,y)>=thr){if(a===null)a=y; b=y;}} return a===null?null:[a,b];}
+function zoneStat(r){
+  const x1=Math.min(r.x1,r.x2),x2=Math.max(r.x1,r.x2),y1=Math.min(r.y1,r.y2),y2=Math.max(r.y1,r.y2);
+  const nx=Math.max(2,Math.min(200,Math.ceil((x2-x1)/0.5))), ny=Math.max(2,Math.min(80,Math.ceil((y2-y1)/0.25)));
+  let mn=Infinity,mx=-Infinity,s=0,c=0;
+  for(let i=0;i<=nx;i++)for(let j=0;j<=ny;j++){const e=Eat(x1+(x2-x1)*i/nx,y1+(y2-y1)*j/ny); mn=Math.min(mn,e); mx=Math.max(mx,e); s+=e; c++;}
+  return r.stat==="min"?mn:r.stat==="avg"?s/c:mx;
+}
+function evalReq(r){
+  let v=null,unit="lx",txt;
+  if(r.type==="point"){v=Eat(+r.x,+r.y); txt=fmt(v,2)+" lx";}
+  else if(r.type==="range"){const d=rangeOn(+r.y,+r.thr); v=d===null?0:d; unit="m"; txt=d===null?"not reached":fmt(d,1)+" m";}
+  else if(r.type==="width"){const w=widthAt(+r.x,+r.thr); v=w?w[1]-w[0]:0; unit="m"; txt=w?fmt(v,2)+" m":"none";}
+  else if(r.type==="zone"){v=zoneStat(r); txt=`${r.stat||"max"} ${fmt(v,2)} lx`;}
+  const lim=+r.limit, ok=Number.isFinite(lim)?(r.op==="<="?v<=lim:v>=lim):null;
+  return {v,txt,ok,unit};
+}
+
+/* ------------------------------------------------------------------ plot */
+const cv=$("#plot"), ctx=cv.getContext("2d");
+const base=document.createElement("canvas"), bctx=base.getContext("2d");
+let G=null, VIEW=null, hover=null;
+const STOPS=[[0,[18,24,48]],[.14,[30,52,150]],[.3,[22,112,205]],[.45,[18,170,175]],[.6,[72,192,84]],[.72,[222,214,44]],[.85,[246,142,26]],[.95,[232,54,32]],[1,[255,236,226]]];
+function cmap(t){
+  if(t<=0) return STOPS[0][1]; if(t>=1) return STOPS[STOPS.length-1][1];
+  for(let i=1;i<STOPS.length;i++) if(t<=STOPS[i][0]){const [a,ca]=STOPS[i-1],[b,cb]=STOPS[i],u=(t-a)/(b-a); return ca.map((c,k)=>Math.round(c+(cb[k]-c)*u));}
+}
+const parseList=s=>String(s).split(/[,;\s]+/).map(Number).filter(x=>Number.isFinite(x)&&x>0).sort((a,b)=>a-b);
+function niceStep(range,target){const r=range/target, p=Math.pow(10,Math.floor(Math.log10(r))), m=r/p; return (m<1.5?1:m<3?2:m<7?5:10)*p;}
+
+function computeGrid(){
+  const W=cv.clientWidth, Hh=cv.clientHeight;
+  const m={l:46,r:12,t:10,b:30};
+  const pw=Math.max(50,W-m.l-m.r), ph=Math.max(50,Hh-m.t-m.b);
+  const gw=Math.min(560,Math.max(80,Math.round(pw/2))), gh=Math.min(300,Math.max(50,Math.round(ph/2)));
+  const x0=0,x1=Math.max(10,+S.xmax), y0=Math.min(S.ymin,S.ymax-1), y1=Math.max(S.ymax,S.ymin+1);
+  const E=new Float32Array(gw*gh); let emax=0,ix=0,iy=0;
+  for(let j=0;j<gh;j++){const y=y1-(j+0.5)/gh*(y1-y0); for(let i=0;i<gw;i++){const x=x0+(i+0.5)/gw*(x1-x0); const e=Eat(x,y); E[j*gw+i]=e; if(e>emax){emax=e;ix=x;iy=y;}}}
+  G={E,gw,gh,emax,ex:ix,ey:iy}; VIEW={W,H:Hh,m,pw,ph,x0,x1,y0,y1};
+}
+const X=x=>VIEW.m.l+(x-VIEW.x0)/(VIEW.x1-VIEW.x0)*VIEW.pw;
+const Y=y=>VIEW.m.t+(VIEW.y1-y)/(VIEW.y1-VIEW.y0)*VIEW.ph;
+function contourSegs(level){
+  const {E,gw,gh}=G, segs=[];
+  const t=(a,b)=>(level-a)/(b-a);
+  for(let j=0;j<gh-1;j++)for(let i=0;i<gw-1;i++){
+    const tl=E[j*gw+i],tr=E[j*gw+i+1],br=E[(j+1)*gw+i+1],bl=E[(j+1)*gw+i];
+    const c=(tl>=level?8:0)|(tr>=level?4:0)|(br>=level?2:0)|(bl>=level?1:0);
+    if(c===0||c===15) continue;
+    const T=()=>[i+t(tl,tr),j], R=()=>[i+1,j+t(tr,br)], B=()=>[i+t(bl,br),j+1], Lf=()=>[i,j+t(tl,bl)];
+    const add=(a,b)=>segs.push([a(),b()]);
+    switch(c){case 1:case 14:add(Lf,B);break;case 2:case 13:add(B,R);break;case 3:case 12:add(Lf,R);break;case 4:case 11:add(T,R);break;
+      case 5:add(T,R);add(Lf,B);break;case 6:case 9:add(T,B);break;case 7:case 8:add(T,Lf);break;case 10:add(T,Lf);add(B,R);break;}
+  }
+  return segs;
+}
+function drawBase(){
+  const dpr=window.devicePixelRatio||1;
+  base.width=Math.round(VIEW.W*dpr); base.height=Math.round(VIEW.H*dpr);
+  const c=bctx; c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,VIEW.W,VIEW.H);
+  const levels=parseList(S.levels);
+  const top=levels[levels.length-1]||10, lo=Math.max(0.02,(levels[0]||0.5)/4), hi=Math.max(lo*10,Math.min(G.emax,top*1.5));
+  const llo=Math.log10(lo), lhi=Math.log10(hi);
+  // field image
+  const img=new ImageData(G.gw,G.gh), d=img.data;
+  for(let k=0;k<G.E.length;k++){const e=G.E[k]; let col; if(e<lo){col=[16,19,23];} else col=cmap((Math.log10(e)-llo)/(lhi-llo)); d[4*k]=col[0];d[4*k+1]=col[1];d[4*k+2]=col[2];d[4*k+3]=255;}
+  const tmp=document.createElement("canvas"); tmp.width=G.gw; tmp.height=G.gh; tmp.getContext("2d").putImageData(img,0,0);
+  c.imageSmoothingEnabled=true; c.drawImage(tmp,VIEW.m.l,VIEW.m.t,VIEW.pw,VIEW.ph);
+  // grid
+  c.save(); c.beginPath(); c.rect(VIEW.m.l,VIEW.m.t,VIEW.pw,VIEW.ph); c.clip();
+  const sx=niceStep(VIEW.x1-VIEW.x0,8), sy=niceStep(VIEW.y1-VIEW.y0,6);
+  c.strokeStyle="rgba(255,255,255,0.07)"; c.lineWidth=1;
+  for(let x=Math.ceil(VIEW.x0/sx)*sx;x<=VIEW.x1;x+=sx){c.beginPath();c.moveTo(X(x)+.5,VIEW.m.t);c.lineTo(X(x)+.5,VIEW.m.t+VIEW.ph);c.stroke();}
+  for(let y=Math.ceil(VIEW.y0/sy)*sy;y<=VIEW.y1;y+=sy){c.beginPath();c.moveTo(VIEW.m.l,Y(y)+.5);c.lineTo(VIEW.m.l+VIEW.pw,Y(y)+.5);c.stroke();}
+  // centreline of vehicle
+  c.setLineDash([2,4]); c.strokeStyle="rgba(255,255,255,0.28)"; c.beginPath(); c.moveTo(VIEW.m.l,Y(0));c.lineTo(VIEW.m.l+VIEW.pw,Y(0)); c.stroke(); c.setLineDash([]);
+  // lane markings
+  const pxPerM=VIEW.pw/(VIEW.x1-VIEW.x0);
+  for(const mk of S.markings||[]){
+    if(!Number.isFinite(+mk.y)||mk.y<VIEW.y0-1||mk.y>VIEW.y1+1) continue;
+    const col=mk.color==="yellow"?"rgba(250,204,60,0.95)":"rgba(245,247,250,0.92)";
+    c.strokeStyle=col; c.lineWidth=2;
+    const yy=Y(+mk.y);
+    if(mk.style==="dashed") c.setLineDash([Math.max(3,3*pxPerM),Math.max(4,9*pxPerM)]); else c.setLineDash([]);
+    const offs=mk.style==="double"?[-2,2]:[0];
+    for(const o of offs){c.beginPath();c.moveTo(VIEW.m.l,yy+o);c.lineTo(VIEW.m.l+VIEW.pw,yy+o);c.stroke();}
+    c.setLineDash([]);
+    c.font="500 10.5px "+getComputedStyle(document.body).getPropertyValue("--f-ui"); c.fillStyle=col; c.textBaseline="bottom";
+    c.lineWidth=3; c.strokeStyle="rgba(8,10,13,0.85)"; c.strokeText(mk.name,VIEW.m.l+6,yy-4); c.fillText(mk.name,VIEW.m.l+6,yy-4);
+  }
+  // contours
+  if(S.showContours){
+    const gx=i=>VIEW.m.l+(i+0.5)/G.gw*VIEW.pw, gy=j=>VIEW.m.t+(j+0.5)/G.gh*VIEW.ph;
+    c.font="500 10.5px "+getComputedStyle(document.body).getPropertyValue("--f-mono");
+    const placed=[], labels=[];
+    for(const lv of levels.slice().reverse()){
+      if(lv>G.emax) continue;
+      const segs=contourSegs(lv); if(!segs.length) continue;
+      c.strokeStyle="rgba(255,255,255,0.85)"; c.lineWidth=1.1; c.beginPath();
+      for(const [a,b] of segs){c.moveTo(gx(a[0]),gy(a[1]));c.lineTo(gx(b[0]),gy(b[1]));}
+      c.stroke();
+      const s=lv+" lx", w=c.measureText(s).width+4;
+      const cand=segs.map(sg=>sg[0]).sort((p,q)=>q[0]-p[0]);
+      for(let n=0;n<cand.length;n+=Math.max(1,Math.floor(cand.length/120))){
+        const tx=gx(cand[n][0]), ty=gy(cand[n][1]), lx=Math.min(tx+3,VIEW.m.l+VIEW.pw-w-2);
+        const box=[lx-2,ty-8,w,16];
+        if(ty<VIEW.m.t+8||ty>VIEW.m.t+VIEW.ph-8) continue;
+        if(placed.some(o=>box[0]<o[0]+o[2]&&o[0]<box[0]+box[2]&&box[1]<o[1]+o[3]&&o[1]<box[1]+box[3])) continue;
+        placed.push(box); labels.push([s,lx,ty,box]); break;
+      }
+    }
+    c.textBaseline="middle";
+    for(const [s,lx,ty,box] of labels){c.fillStyle="rgba(8,10,13,0.78)"; c.fillRect(box[0],ty-7,box[2],14); c.fillStyle="#fff"; c.fillText(s,lx,ty);}
+  }
+  // requirement overlays
+  if(S.showReqs){
+    c.font="600 10.5px "+getComputedStyle(document.body).getPropertyValue("--f-mono"); c.textBaseline="middle";
+    S.reqs.forEach((r,idx)=>{
+      const res=lastEval[r.id], col=res&&res.ok===false?"#ff8a7a":res&&res.ok?"#6ee7a8":"#f0a33a";
+      c.strokeStyle=col; c.fillStyle=col; c.lineWidth=1.6;
+      const tag=String(idx+1);
+      if(r.type==="point"){const px=X(+r.x),py=Y(+r.y); c.beginPath();c.arc(px,py,5,0,7);c.stroke(); c.fillText(tag,px+8,py-8);}
+      else if(r.type==="zone"){const a=X(Math.min(r.x1,r.x2)),b=X(Math.max(r.x1,r.x2)),t=Y(Math.max(r.y1,r.y2)),bt=Y(Math.min(r.y1,r.y2)); c.setLineDash([5,4]); c.strokeRect(a,t,b-a,bt-t); c.setLineDash([]); c.fillText(tag,a+5,t+9);}
+      else if(r.type==="range"){const py=Y(+r.y); const d=res&&res.v; if(d>0){const px=X(d); c.beginPath();c.moveTo(px,py-7);c.lineTo(px,py+7);c.stroke(); c.beginPath();c.moveTo(px-5,py);c.lineTo(px,py);c.stroke();} const lp=X(+r.limit); c.setLineDash([2,3]); c.beginPath();c.moveTo(lp,py-9);c.lineTo(lp,py+9);c.stroke(); c.setLineDash([]); c.fillText(tag,lp+4,py-10);}
+      else if(r.type==="width"){const px=X(+r.x); c.setLineDash([2,3]); c.beginPath();c.moveTo(px,VIEW.m.t);c.lineTo(px,VIEW.m.t+VIEW.ph);c.stroke(); c.setLineDash([]); c.fillText(tag,px+4,VIEW.m.t+10);}
+    });
+  }
+  c.restore();
+  // lamps
+  for(const L of LAMPS){const px=X(Math.max(VIEW.x0,L.px)),py=Y(L.py); c.fillStyle="#f0a33a"; c.beginPath(); c.moveTo(px,py-5);c.lineTo(px+9,py);c.lineTo(px,py+5);c.closePath();c.fill();}
+  // frame + axes
+  c.strokeStyle="rgba(255,255,255,0.18)"; c.lineWidth=1; c.strokeRect(VIEW.m.l+.5,VIEW.m.t+.5,VIEW.pw-1,VIEW.ph-1);
+  c.fillStyle="#a9b4bf"; c.font="400 11px "+getComputedStyle(document.body).getPropertyValue("--f-mono");
+  c.textAlign="center"; c.textBaseline="top";
+  for(let x=Math.ceil(VIEW.x0/sx)*sx;x<=VIEW.x1+1e-9;x+=sx) c.fillText(String(+x.toFixed(2)),X(x),VIEW.m.t+VIEW.ph+5);
+  c.textAlign="right"; c.textBaseline="middle";
+  for(let y=Math.ceil(VIEW.y0/sy)*sy;y<=VIEW.y1+1e-9;y+=sy) c.fillText(String(+y.toFixed(2)).replace("-","−"),VIEW.m.l-6,Y(y));
+  c.textAlign="right"; c.textBaseline="bottom"; c.fillText("x ahead [m]",VIEW.m.l+VIEW.pw,VIEW.H-1);
+  c.save(); c.translate(11,VIEW.m.t+VIEW.ph/2); c.rotate(-Math.PI/2); c.textAlign="center"; c.textBaseline="middle"; c.fillText("y [m]  left +",0,0); c.restore();
+  c.textAlign="left";
+  drawLegend(lo,hi,levels);
+}
+function drawLegend(lo,hi,levels){
+  const llo=Math.log10(lo),lhi=Math.log10(hi);
+  $("#legBar").style.background="linear-gradient(90deg,"+STOPS.map(([t,c])=>`rgb(${c.join(",")}) ${t*100}%`).join(",")+")";
+  const ticks=levels.filter(l=>l>=lo&&l<=hi).map(l=>`<span style="left:${((Math.log10(l)-llo)/(lhi-llo)*100).toFixed(2)}%">${l}</span>`);
+  ticks.push(`<span style="left:100%;transform:translateX(-100%)">${G.emax>hi?"≥ ":""}${fmt(hi,hi<10?1:0)}</span>`);
+  $("#legTicks").innerHTML=ticks.join("");
+}
+function drawFrame(){
+  const dpr=window.devicePixelRatio||1;
+  cv.width=base.width; cv.height=base.height;
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height); ctx.drawImage(base,0,0);
+  if(hover){
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.strokeStyle="rgba(255,255,255,0.6)"; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(hover.px,VIEW.m.t); ctx.lineTo(hover.px,VIEW.m.t+VIEW.ph); ctx.moveTo(VIEW.m.l,hover.py); ctx.lineTo(VIEW.m.l+VIEW.pw,hover.py); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+function onMove(ev){
+  if(!VIEW) return;
+  const r=cv.getBoundingClientRect(), px=ev.clientX-r.left, py=ev.clientY-r.top;
+  if(px<VIEW.m.l||px>VIEW.m.l+VIEW.pw||py<VIEW.m.t||py>VIEW.m.t+VIEW.ph){hover=null; drawFrame(); return;}
+  const x=VIEW.x0+(px-VIEW.m.l)/VIEW.pw*(VIEW.x1-VIEW.x0), y=VIEW.y1-(py-VIEW.m.t)/VIEW.ph*(VIEW.y1-VIEW.y0);
+  hover={px,py}; const e=Eat(x,y);
+  const hv=LAMPS.map(L=>{const [h,v]=lampHV(L,x,y); return `${L.name} H ${fmt(h,2)}° V ${fmt(v,2)}°`;}).join("  ·  ");
+  $("#readout").innerHTML=`<span>x <b>${fmt(x,1)} m</b></span><span>y <b>${fmt(y,2)} m</b></span><span>E <b>${fmt(e,e<10?2:1)} lx</b></span><span>${hv}</span>`;
+  drawFrame();
+}
+cv.addEventListener("pointermove",onMove);
+cv.addEventListener("pointerdown",onMove);
+cv.addEventListener("pointerleave",()=>{hover=null; drawFrame(); $("#readout").innerHTML="<span>Move over the plot to read illuminance</span>";});
+
+/* ------------------------------------------------------------------ results */
+let lastEval={};
+function renderResults(){
+  const thr=parseList(S.thr).slice(0,4), wx=parseList(S.widthX).slice(0,6);
+  const lines=[{name:"Vehicle axis",y:0}].concat((S.markings||[]).map(m=>({name:m.name,y:+m.y})));
+  // range: sample each line once, reuse for all thresholds
+  const rows=lines.map(L=>{const last=thr.map(()=>null); for(let x=0;x<=300;x+=0.1){const e=Eat(x,L.y); thr.forEach((t,k)=>{if(e>=t) last[k]=x;});} return {L,last};});
+  $("#rangeTbl").innerHTML=`<thead><tr><th>Line</th><th class="num">y [m]</th>${thr.map(t=>`<th class="num">${t} lx</th>`).join("")}</tr></thead><tbody>`+
+    rows.map(({L,last})=>`<tr><td>${esc(L.name)}</td><td class="num mono">${fmt(L.y,2)}</td>${last.map(d=>`<td class="num mono">${d===null?"—":fmt(d,1)+" m"}</td>`).join("")}</tr>`).join("")+"</tbody>";
+  const lim=Math.max(30,Math.abs(S.ymin),Math.abs(S.ymax));
+  $("#widthTbl").innerHTML=`<thead><tr><th class="num">x [m]</th>${thr.map(t=>`<th class="num">${t} lx</th>`).join("")}</tr></thead><tbody>`+
+    wx.map(x=>`<tr><td class="num mono">${x}</td>${thr.map(t=>{const w=widthAt(x,t,lim); return `<td class="num mono" title="${w?`right ${fmt(w[0],2)} m to left ${fmt(w[1],2)} m`:""}">${w?fmt(w[1]-w[0],1)+" m":"—"}</td>`;}).join("")}</tr>`).join("")+"</tbody>";
+  const hits=LAMPS.map(L=>{const el=Math.asin(L.f[2])/D2R; return {L,el,d:el<0?L.pz/Math.tan(-el*D2R):null};});
+  $("#kpis").innerHTML=[
+    ["E max on view",`${fmt(G.emax,1)} lx`],["at",`${fmt(G.ex,1)} m, ${fmt(G.ey,2)} m`],
+    ...hits.map(h=>[`${h.L.name} axis meets road`,h.d===null?"never":`${fmt(h.d,1)} m`])
+  ].map(([a,b])=>`<div class="kpi"><span>${a}</span><b>${b}</b></div>`).join("");
+  $("#geomInfo").innerHTML=hits.map(h=>`${h.L.name}: pos (${fmt(h.L.px,3)}, ${fmt(h.L.py,3)}, ${fmt(h.L.pz,3)}) m · axis ${fmt(h.el,3)}°`).join("<br>");
+}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+let reqSig="";
+function renderReqs(){
+  lastEval={}; let pass=0,fail=0;
+  S.reqs.forEach(r=>{const e=evalReq(r); lastEval[r.id]=e; if(e.ok===true)pass++; else if(e.ok===false)fail++;});
+  const sig=S.reqs.map(r=>r.id+":"+r.type).join("|");
+  if(sig!==reqSig){reqSig=sig; buildReqTable();}
+  S.reqs.forEach(r=>{const e=lastEval[r.id], row=document.querySelector(`#reqBody tr[data-id="${r.id}"]`); if(!row)return;
+    row.querySelector(".meas").textContent=e.txt;
+    row.querySelector(".res").innerHTML=e.ok===null?'<span class="chip">no limit</span>':e.ok?'<span class="chip pass">Pass</span>':'<span class="chip fail">Fail</span>';
+    row.querySelector(".unit").textContent=r.type==="range"||r.type==="width"?"m":"lx";});
+  $("#reqEmpty").hidden=S.reqs.length>0;
+  const sum=[]; if(S.reqsExample&&S.reqs.length) sum.push('<span class="chip ex">Example checks, replace with customer values</span>');
+  if(S.reqs.length) sum.push(`<span class="chip pass"><b>${pass}</b> pass</span>`,`<span class="chip ${fail?"fail":""}"><b>${fail}</b> fail</span>`);
+  $("#reqSummary").innerHTML=sum.join("");
+  if(document.activeElement!==$("#reqJson")) $("#reqJson").value=JSON.stringify(S.reqs.map(({id,...r})=>r),null,2);
+}
+function buildReqTable(){
+  const num=(r,k,u,step)=>`<label>${k}<input type="number" step="${step||0.5}" data-r="${r.id}" data-k="${k}" value="${r[k]??""}" aria-label="${k} in ${u}">${u}</label>`;
+  const params=r=>{
+    if(r.type==="point") return num(r,"x","m")+num(r,"y","m",0.05);
+    if(r.type==="range") return num(r,"y","m",0.05)+num(r,"thr","lx",0.5);
+    if(r.type==="width") return num(r,"x","m",1)+num(r,"thr","lx",0.5);
+    return num(r,"x1","m",5)+num(r,"x2","m",5)+num(r,"y1","m",0.05)+num(r,"y2","m",0.05)+
+      `<label>stat<select data-r="${r.id}" data-k="stat">${["max","min","avg"].map(s=>`<option ${r.stat===s?"selected":""}>${s}</option>`).join("")}</select></label>`;
+  };
+  $("#reqBody").innerHTML=S.reqs.map((r,i)=>`<tr data-id="${r.id}"><td class="mono">${i+1}</td>
+      <td><input type="text" class="lab" data-r="${r.id}" data-k="label" value="${esc(r.label||"")}" aria-label="Requirement name"></td>
+      <td><select data-r="${r.id}" data-k="type" aria-label="Check type">${["point","range","width","zone"].map(t=>`<option ${r.type===t?"selected":""}>${t}</option>`).join("")}</select></td>
+      <td><div class="params">${params(r)}</div></td>
+      <td><div class="lim"><select data-r="${r.id}" data-k="op" aria-label="Comparison"><option value=">=" ${r.op!=="<="?"selected":""}>≥</option><option value="<=" ${r.op==="<="?"selected":""}>≤</option></select><input type="number" step="0.5" data-r="${r.id}" data-k="limit" value="${r.limit??""}" aria-label="Limit"><span class="mono note unit"></span></div></td>
+      <td class="meas"></td><td class="res"></td>
+      <td><button class="btn ghost" type="button" data-del="${r.id}" aria-label="Delete check ${i+1}">✕</button></td></tr>`).join("");
+}
+
+function renderMarkings(){
+  $("#mkBody").innerHTML=(S.markings||[]).map((m,i)=>`<div class="mk">
+    <input class="nm" type="text" data-m="${i}" data-k="name" value="${esc(m.name)}" aria-label="Line name">
+    <button class="btn ghost" type="button" data-mdel="${i}" aria-label="Delete line">✕</button>
+    <div class="inp"><input type="number" step="0.05" data-m="${i}" data-k="y" value="${m.y}" aria-label="y position in metres" style="padding-right:22px"><span class="u">m</span></div>
+    <select data-m="${i}" data-k="style" aria-label="Line style">${["solid","dashed","double"].map(s=>`<option ${m.style===s?"selected":""}>${s}</option>`).join("")}</select>
+    <select data-m="${i}" data-k="color" aria-label="Line colour">${["white","yellow"].map(s=>`<option ${m.color===s?"selected":""}>${s}</option>`).join("")}</select>
+    <span></span></div>`).join("");
+}
+
+function renderInfo(){
+  const meta=(raw,P)=>{if(!raw)return ""; const H=P.Hs,V=P.Vs; return `Type ${raw.ptype===2?"B":raw.ptype===3?"A":raw.ptype} · H ${fmt(H[0],1)}…${fmt(H[H.length-1],1)}° (${H.length}) · V ${fmt(V[0],1)}…${fmt(V[V.length-1],1)}° (${V.length})<br>peak ${Math.round(P.peak).toLocaleString()} cd at H ${fmt(P.pH,1)}°, V ${fmt(P.pV,2)}° · flux ${Math.round(flux(P,S.angleSys))} lm`;};
+  $("#nameL").textContent=rawL.name; $("#metaL").innerHTML=meta(rawL,PL);
+  $("#nameR").textContent=rawR?rawR.name:S.mirrorRight?"Left file, mirrored":"Uses the left file";
+  $("#metaR").innerHTML=rawR?meta(rawR,PR):""; $("#clearR").hidden=!rawR;
+  $("#hint-photo").textContent=rawL.sample?"sample beam":rawL.name;
+  $("#hint-mount").textContent=`h ${S.height} m · aim ${S.aim} %`;
+  $("#hint-road").textContent=`${S.side} · ${(S.markings||[]).length} lines`;
+  $("#hint-plot").textContent=`0–${S.xmax} m`;
+  $("#status").innerHTML=(rawL.sample?'<span class="chip ex">Sample beam loaded</span>':`<span class="chip">Beam <b>${esc(rawL.name)}</b></span>`)+
+    `<span class="chip">${S.side}${S.mirrorAll?" · mirrored":""}</span>`;
+  $("#plotSub").textContent=`Horizontal illuminance, lamps at h = ${S.height} m, aim ${S.aim} %, pitch ${S.pitch}°, roll ${S.roll}°`;
+}
+
+/* ------------------------------------------------------------------ main loop */
+let raf=0, infoDirty=true;
+function schedule(info){ if(info) infoDirty=true; if(!raf) raf=requestAnimationFrame(run); }
+function run(){
+  raf=0;
+  buildLamps();
+  computeGrid();
+  renderReqs();      // fills lastEval used by the plot overlay
+  drawBase(); drawFrame();
+  renderResults();
+  if(infoDirty){renderInfo(); infoDirty=false;}
+  save();
+}
+
+/* ------------------------------------------------------------------ bind controls */
+const NUM=["height","sep","aim","toe","pitch","roll","pivot","scale","laneW","ownN","oppN","vehLane","laneOff","xmax","ymin","ymax"];
+const SEL=["angleSys","only","side","centre","centreCol","yfit"], TXT=["levels","thr","widthX"], CHK=["mirrorRight","mirrorAll","showContours","showReqs"];
+const ROAD=new Set(["side","laneW","ownN","oppN","vehLane","laneOff","centre","centreCol"]);
+NUM.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("input",()=>{const v=parseFloat(el.value); if(!Number.isFinite(v))return; S[k]=v;
+  if(k==="ymin"||k==="ymax"){S.yfit="manual"; $("#yfit").value="manual";}
+  if(ROAD.has(k)){buildMarkings(); renderMarkings(); fitY();}
+  schedule(true);});});
+SEL.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("change",()=>{S[k]=el.value; if(ROAD.has(k)){buildMarkings(); renderMarkings();} fitY(); schedule(true);});});
+TXT.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("change",()=>{S[k]=el.value; schedule(true);});});
+CHK.forEach(k=>{const el=$("#"+k); el.checked=!!S[k]; el.addEventListener("change",()=>{S[k]=el.checked; schedule(true);});});
+
+$("#genRoad").addEventListener("click",()=>{buildMarkings(); renderMarkings(); S.yfit="road"; $("#yfit").value="road"; fitY(); schedule(true); toast("Markings rebuilt from layout");});
+$("#addMk").addEventListener("click",()=>{S.markings.push({name:"Line",y:0,style:"solid",color:"white"}); renderMarkings(); schedule(true);});
+$("#mkBody").addEventListener("input",e=>{const el=e.target, i=el.dataset.m; if(i===undefined)return; const k=el.dataset.k;
+  S.markings[i][k]=k==="y"?parseFloat(el.value):el.value; if(k==="y"&&!Number.isFinite(S.markings[i].y))return; schedule(true);});
+$("#mkBody").addEventListener("click",e=>{const b=e.target.closest("[data-mdel]"); if(!b)return; S.markings.splice(+b.dataset.mdel,1); renderMarkings(); schedule(true);});
+
+// requirements editing
+const REQ_DEFAULTS={point:{x:30,y:0,op:">=",limit:5},range:{y:0,thr:1,op:">=",limit:50},width:{x:20,thr:1,op:">=",limit:8},zone:{x1:50,x2:100,y1:1.75,y2:5.25,stat:"max",op:"<=",limit:1}};
+document.querySelectorAll("[data-add]").forEach(b=>b.addEventListener("click",()=>{const t=b.dataset.add;
+  S.reqs.push(Object.assign({id:reqSeq++,label:`New ${t} check`,type:t},REQ_DEFAULTS[t])); S.reqsExample=false; schedule();}));
+const onReq=e=>{const el=e.target, id=+el.dataset.r; if(!id)return; const r=S.reqs.find(q=>q.id===id); if(!r)return; const k=el.dataset.k;
+  if(k==="type"){const keep={id:r.id,label:r.label,type:el.value}; Object.keys(r).forEach(x=>delete r[x]); Object.assign(r,keep,REQ_DEFAULTS[el.value]);}
+  else if(k==="label"||k==="op"||k==="stat") r[k]=el.value;
+  else {const v=parseFloat(el.value); if(Number.isFinite(v)) r[k]=v; else return;}
+  S.reqsExample=false; schedule();};
+$("#reqBody").addEventListener("change",onReq);
+$("#reqBody").addEventListener("input",e=>{if(e.target.type==="number"||e.target.type==="text")onReq(e);});
+$("#reqBody").addEventListener("click",e=>{const b=e.target.closest("[data-del]"); if(!b)return; S.reqs=S.reqs.filter(r=>r.id!==+b.dataset.del); schedule();});
+$("#loadExample").addEventListener("click",()=>{S.reqs=exampleReqs(); ensureIds(); S.reqsExample=true; schedule(); toast("Example checks loaded");});
+$("#clearReqs").addEventListener("click",()=>{S.reqs=[]; S.reqsExample=false; schedule();});
+$("#copyJson").addEventListener("click",()=>copy($("#reqJson").value,"Requirement set copied"));
+$("#applyJson").addEventListener("click",()=>{const err=$("#jsonErr");
+  try{const a=JSON.parse($("#reqJson").value); if(!Array.isArray(a)) throw new Error("The JSON must be a list of checks.");
+    const ok=a.filter(r=>r&&["point","range","width","zone"].includes(r.type));
+    if(!ok.length) throw new Error("No valid checks found. Each needs a type of point, range, width or zone.");
+    S.reqs=ok.map(r=>Object.assign({},REQ_DEFAULTS[r.type],r,{id:reqSeq++})); S.reqsExample=false; err.hidden=true; schedule(); toast(`${ok.length} checks loaded`);}
+  catch(e){err.textContent="Could not read the JSON: "+e.message; err.hidden=false;}});
+
+// files
+function handleFile(which,file){
+  if(!file) return;
+  const rd=new FileReader();
+  rd.onload=()=>{ if(loadText(which,String(rd.result),file.name)){ if(which==="L") S.nameL=file.name; else S.nameR=file.name; schedule(true); toast(`Loaded ${file.name}`);} };
+  rd.readAsText(file);
+}
+$("#fileL").addEventListener("change",e=>{handleFile("L",e.target.files[0]); e.target.value="";});
+$("#fileR").addEventListener("change",e=>{handleFile("R",e.target.files[0]); e.target.value="";});
+$("#clearR").addEventListener("click",()=>{rawR=null; textR=null; schedule(true);});
+for(const [id,w] of [["#dropL","L"],["#dropR","R"]]){const z=$(id);
+  z.addEventListener("dragover",e=>{e.preventDefault(); z.classList.add("over");});
+  z.addEventListener("dragleave",()=>z.classList.remove("over"));
+  z.addEventListener("drop",e=>{e.preventDefault(); z.classList.remove("over"); handleFile(w,e.dataTransfer.files[0]);});}
+
+$("#copyCsv").addEventListener("click",()=>{
+  const xs=[],ys=[]; for(let x=0;x<=S.xmax+1e-9;x+=0.5)xs.push(+x.toFixed(2)); for(let y=S.ymax;y>=S.ymin-1e-9;y-=0.25)ys.push(+y.toFixed(2));
+  const out=["y\\x [m]," +xs.join(",")]; for(const y of ys) out.push(y+","+xs.map(x=>Eat(x,y).toFixed(3)).join(","));
+  copy(out.join("\n"),`Grid copied: ${xs.length} × ${ys.length} points in lx`);});
+
+function copy(text,msg){
+  const done=()=>toast(msg), fail=()=>{const ta=$("#reqJson"); const old=ta.value; ta.value=text; ta.closest("details").open=true; ta.focus(); ta.select(); toast("Copy was blocked. The text is selected in the JSON box; press Ctrl+C."); setTimeout(()=>{},0);};
+  try{navigator.clipboard.writeText(text).then(done,fail);}catch(e){fail();}
+}
+let tt=0; function toast(m){const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove("show"),2400);}
+
+new ResizeObserver(()=>schedule()).observe($(".plotwrap"));
+renderMarkings(); fitY();
+schedule(true);
+})();
+</script>
+</body>
+</html>
