@@ -15,6 +15,20 @@ It takes into account the real installation of the lamps on the vehicle:
 
 Typical uses are comparing beam patterns, checking how aim or load changes the road light, and quick design iterations without a full simulation tool.
 
+## Web tool
+
+**Open it in the browser: https://jalibakthermk.github.io/Road-illuminate/**
+
+The web tool (`docs/index.html`) does the same calculation without installing anything:
+
+- Load or drag in IES files for the left lamp, and optionally a separate or mirrored right lamp. Files are read in the browser and never uploaded.
+- Set the mounting height, lamp separation, aim, toe, and vehicle pitch and roll.
+- See the road isolux plot with lane markings and a live readout of illuminance and H/V angles under the pointer.
+- Build the lane layout from traffic side, lane width and lane counts, then edit any line.
+- Add customer requirement checks (point, range, width, zone) that show pass or fail live. Requirement sets can be copied out and pasted back as JSON.
+
+It opens with a synthetic sample beam so it works straight away. The sections below describe the Python script.
+
 ## Contents
 
 1. [Requirements](#1-requirements)
