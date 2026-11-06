@@ -2,7 +2,7 @@
 """
 headlamp_road_illuminance.py
 ----------------------------
-Road-surface illuminance from vehicle headlamp photometry (IES LM-63 file,
+Road illuminance from vehicle headlamp photometry (IES LM-63 file,
 Type A or Type B, H-V angles), including lamp mounting position, aim,
 toe-in/out, vehicle pitch and roll.
 
@@ -55,8 +55,15 @@ MOUNTING AND ORIENTATION
       --only left|right -> evaluate one lamp only
       --mirror-all     -> mirror H for both lamps (RHT <-> LHT conversion)
 
+ILLUMINANCE METHOD (--method)
+    hspr (default) : HSPR / GTB reference method (TU Darmstadt HSPR software).
+                     Illuminance on a vertical plane facing the vehicle at --eval-height,
+                     E = I cos(alpha) / d^2. Aim and toe shift the photometric data by an
+                     angle; H, V are read on the 0.05 deg grid. Thresholds count E > limit.
+    road           : horizontal illuminance on the road surface, E = I h / d^3.
+
 EVALUATION
-    Grid of horizontal illuminance on the road, x in [x-min, x-max], y in [y-min, y-max].
+    Grid of illuminance on the road, x in [x-min, x-max], y in [y-min, y-max].
     Reports:
       * E at a list of road points (--points "x,y;x,y;...")
       * Range: farthest distance on given lateral lines where E >= threshold
@@ -201,8 +208,14 @@ def build_lamps(args):
             continue
         p0 = np.array([0.0, y, args.height])
         pos = pivot + R_veh @ (p0 - pivot)
-        axes = R_veh @ lamp_frame(args.aim, yaw)
-        lamps.append(dict(name=name, pos=pos, axes=axes, ies=ies))
+        hspr = args.method == "hspr"
+        aim_pct = args.aim if args.aim_unit == "pct" else math.tan(math.radians(args.aim)) * 100
+        aim_deg = args.aim if args.aim_unit == "deg" else math.degrees(math.atan(args.aim / 100))
+        # HSPR shifts the photometric data by the aim/toe angles; road mode tilts the lamp axis
+        axes = R_veh @ (lamp_frame(0.0, 0.0) if hspr else lamp_frame(aim_pct, yaw))
+        lamps.append(dict(name=name, pos=pos, axes=axes, ies=ies, method=args.method,
+                          zp=args.eval_height if hspr else 0.0,
+                          aimV=aim_deg if hspr else 0.0, aimH=-yaw if hspr else 0.0))
     return lamps
 
 
@@ -218,36 +231,57 @@ def angles_HV(vec_local, system):
     return H, V
 
 
+HSPR_STEP = 0.05
+
+
 def road_illuminance(lamps, X, Y, system, scale):
-    """Horizontal illuminance on the road plane z = 0 at points (X, Y)."""
+    """Illuminance at road points (X, Y).
+
+    method "hspr": HSPR / GTB reference method. Illuminance on a vertical plane facing
+        the vehicle at the evaluation height, E = I cos(alpha) / d^2 with cos(alpha) =
+        forward distance / d. H and V are snapped to the 0.05 deg grid and clamped to
+        H +-45 deg, V +-15 deg; aim and toe shift the photometric data by an angle.
+    method "road": horizontal illuminance on the road surface, E = I h / d^3.
+    """
     E = np.zeros(np.broadcast(X, Y).shape)
     for lp in lamps:
         px, py, pz = lp["pos"]
-        v = np.stack(np.broadcast_arrays(X - px, Y - py, np.full_like(E, -pz)), axis=-1)
+        hspr = lp["method"] == "hspr"
+        v = np.stack(np.broadcast_arrays(X - px, Y - py, np.full_like(E, lp["zp"] - pz)), axis=-1)
         D = np.linalg.norm(v, axis=-1)
         loc = v @ lp["axes"]                 # components along lamp f, l, u
         H, V = angles_HV(loc, system)
-        I = lp["ies"].intensity(H, V) * scale
+        if hspr:
+            H = np.clip(np.round(H / HSPR_STEP) * HSPR_STEP, -45, 45)
+            V = np.clip(np.round(V / HSPR_STEP) * HSPR_STEP, -15, 15)
+            I = lp["ies"].intensity(H - lp["aimH"], V - lp["aimV"]) * scale
+        else:
+            I = lp["ies"].intensity(H, V) * scale
         # behind the lamp -> no light
         I = np.where(loc[..., 0] > 0, I, 0.0)
-        E += I * pz / D ** 3                 # E = I cos(theta) / D^2, cos = h / D
+        E += I * (v[..., 0] if hspr else pz) / D ** 3
     return E
+
+
+def meets(lamps, E, thr):
+    """HSPR counts E > threshold; road mode counts E >= threshold."""
+    return E > thr if lamps and lamps[0]["method"] == "hspr" else E >= thr
 
 
 # =============================================================================
 # Evaluation helpers
 # =============================================================================
 def farthest_range(lamps, y0, thr, x_max, system, scale, dx=0.05):
-    xs = np.arange(0.0, x_max + dx, dx)
+    xs = np.arange(dx, x_max + dx, dx)
     E = road_illuminance(lamps, xs, np.full_like(xs, y0), system, scale)
-    hit = np.nonzero(E >= thr)[0]
+    hit = np.nonzero(meets(lamps, E, thr))[0]
     return None if hit.size == 0 else xs[hit[-1]]
 
 
 def width_at(lamps, x0, thr, y_lim, system, scale, dy=0.02):
     ys = np.arange(-y_lim, y_lim + dy, dy)
     E = road_illuminance(lamps, np.full_like(ys, x0), ys, system, scale)
-    hit = np.nonzero(E >= thr)[0]
+    hit = np.nonzero(meets(lamps, E, thr))[0]
     if hit.size == 0:
         return None
     return ys[hit[0]], ys[hit[-1]]           # (rightmost, leftmost) in y
@@ -272,11 +306,18 @@ def main():
                    help="mirror H for all lamps (RHT <-> LHT)")
     p.add_argument("--only", choices=["left", "right"], help="evaluate one lamp only")
     p.add_argument("--angle-system", choices=["azel", "elaz"], default="azel")
+    p.add_argument("--method", choices=["hspr", "road"], default="hspr",
+                   help="hspr = GTB/HSPR vertical-plane illuminance (default); "
+                        "road = horizontal illuminance on the road surface")
+    p.add_argument("--eval-height", type=float, default=0.0,
+                   help="HSPR evaluation height above the road [m] (zones A, B, D: 0; C, E: 0.25)")
 
     g = p.add_argument_group("mounting")
     g.add_argument("--height", type=float, required=True, help="lamp centre height [m]")
     g.add_argument("--separation", type=float, default=1.4, help="lamp centre distance [m]")
-    g.add_argument("--aim", type=float, default=0.0, help="vertical aim [%%], negative = down")
+    g.add_argument("--aim", type=float, default=0.0, help="vertical aim, negative = down (unit: --aim-unit)")
+    g.add_argument("--aim-unit", choices=["pct", "deg"], default="pct",
+                   help="unit of --aim: pct (ECE, -1.0 = 1 %% down) or deg (HSPR)")
     g.add_argument("--toe", type=float, default=0.0, help="horizontal aim [deg], + = outward")
     g.add_argument("--pitch", type=float, default=0.0, help="vehicle pitch [deg], + = nose up")
     g.add_argument("--roll", type=float, default=0.0, help="vehicle roll [deg], + = left side up")
@@ -316,16 +357,18 @@ def main():
     # ---------------- header
     print(f"\nIES           : {args.ies}" + (f" | right: {args.ies_right}" if args.ies_right else ""))
     print(f"Angle system  : {sysname}  (H + right, V + up)")
+    print("Method        : " + (f"HSPR, vertical-plane illuminance at {args.eval_height} m height"
+                               if args.method == "hspr" else "road surface, horizontal illuminance"))
     print(f"Flux in file  : {flux:.0f} lm (within measured H-V range)"
           + (f" -> scaled to {args.lumens:.0f} lm" if args.lumens else ""))
     print(f"Mounting      : h = {args.height} m, separation = {args.separation} m, "
-          f"aim = {args.aim:+.2f} %, toe = {args.toe:+.2f} deg")
+          f"aim = {args.aim:+.2f} {'%' if args.aim_unit == 'pct' else 'deg'}, toe = {args.toe:+.2f} deg")
     print(f"Vehicle       : pitch = {args.pitch:+.2f} deg, roll = {args.roll:+.2f} deg, "
           f"pivot x = {args.pivot_x} m")
     for lp in lamps:
         x, y, z = lp["pos"]
         f = lp["axes"][:, 0]
-        el = math.degrees(math.asin(f[2]))
+        el = math.degrees(math.asin(f[2])) + lp["aimV"]
         az = math.degrees(math.atan2(f[1], f[0]))
         hit = (f"axis meets road at {z / math.tan(-math.radians(el)):.1f} m"
                if el < 0 else "axis does not meet road (aimed level/up)")
@@ -341,14 +384,14 @@ def main():
             print(f"  x = {x:6.1f} m, y = {y:+6.2f} m ({side(y)}): E = {Ep:8.2f} lx")
 
     # ---------------- range and width
-    print("\nRange (farthest distance with E >= threshold):")
+    print("\nRange (farthest distance where E reaches the threshold):")
     for thr in args.thresholds:
         for y0 in args.range_y:
             r = farthest_range(lamps, y0, thr, args.x_max, sysname, scale)
             rs = f"{r:6.1f} m" if r is not None else "   not reached"
             print(f"  {thr:5.1f} lx on line {side(y0):>14s}: {rs}")
 
-    print("\nWidth of illuminated area (E >= threshold):")
+    print("\nWidth of illuminated area (E reaches the threshold):")
     ylim = max(abs(args.y_min), abs(args.y_max))
     for thr in args.thresholds:
         for x0 in args.width_x:

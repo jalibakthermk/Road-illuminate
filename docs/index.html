@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Headlamp road illuminance from IES H-V photometry: mounting height, aim, toe, pitch and roll, lane markings and customer requirement checks.">
+<meta name="description" content="Headlamp road illuminance from IES H-V photometry with the HSPR (GTB) method: mounting height, aim, toe, pitch and roll, lane markings and customer requirement checks.">
 <style>
 :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -192,15 +192,20 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
     <summary>Mounting &amp; orientation <span class="hint" id="hint-mount"></span></summary>
     <div class="sec-body">
       <div class="grid2">
+        <label class="field" style="grid-column:1/-1"><span>Illuminance method</span>
+          <select id="method"><option value="hspr">HSPR (GTB): vertical plane facing the vehicle</option><option value="road">Road surface: horizontal plane</option></select></label>
+        <label class="field" id="evalHField"><span>Evaluation height <em>HSPR</em></span><div class="inp"><input type="number" id="evalH" step="0.05" min="0"><span class="u">m</span></div></label>
+        <label class="field"><span>Aim unit</span><select id="aimUnit"><option value="deg">Degrees (HSPR)</option><option value="pct">Percent (ECE)</option></select></label>
         <label class="field"><span>Mounting height</span><div class="inp"><input type="number" id="height" step="0.01" min="0.05"><span class="u">m</span></div></label>
         <label class="field"><span>Lamp separation</span><div class="inp"><input type="number" id="sep" step="0.01" min="0"><span class="u">m</span></div></label>
-        <label class="field"><span>Vertical aim <em>− down</em></span><div class="inp"><input type="number" id="aim" step="0.1"><span class="u">%</span></div></label>
+        <label class="field"><span>Vertical aim <em>− down</em></span><div class="inp"><input type="number" id="aim" step="0.1"><span class="u" id="aimU">°</span></div></label>
         <label class="field"><span>Toe <em>+ outward</em></span><div class="inp"><input type="number" id="toe" step="0.1"><span class="u">°</span></div></label>
         <label class="field"><span>Vehicle pitch <em>+ nose up</em></span><div class="inp"><input type="number" id="pitch" step="0.1"><span class="u">°</span></div></label>
         <label class="field"><span>Vehicle roll <em>+ left up</em></span><div class="inp"><input type="number" id="roll" step="0.1"><span class="u">°</span></div></label>
         <label class="field"><span>Pitch pivot x <em>rear axle &lt; 0</em></span><div class="inp"><input type="number" id="pivot" step="0.1"><span class="u">m</span></div></label>
       </div>
       <div class="meta" id="geomInfo"></div>
+      <p class="note" id="methodNote"></p>
     </div>
   </details>
 
@@ -244,7 +249,7 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
 <main>
   <section class="card" aria-labelledby="plot-h">
     <div class="card-h">
-      <div><h2 id="plot-h">Road isolux, top view</h2><div class="sub" id="plotSub"></div></div>
+      <div><h2 id="plot-h">Isolux, top view of the road</h2><div class="sub" id="plotSub"></div></div>
       <div class="plot-tools">
         <label class="check"><input type="checkbox" id="showContours" checked>Isolux lines</label>
         <label class="check"><input type="checkbox" id="showReqs" checked>Checks on plot</label>
@@ -379,14 +384,14 @@ function sampleIES(){
 
 /* ------------------------------------------------------------------ state */
 const DEFAULT={
-  height:0.65,sep:1.4,aim:-1.0,toe:0,pitch:0,roll:0,pivot:-2.7,scale:1,angleSys:"azel",only:"both",mirrorRight:false,mirrorAll:false,
+  method:"hspr",evalH:0,aimUnit:"deg",height:0.65,sep:1.4,aim:-0.57,toe:0,pitch:0,roll:0,pivot:-2.7,scale:1,angleSys:"azel",only:"both",mirrorRight:false,mirrorAll:false,
   side:"RHT",laneW:3.5,ownN:1,oppN:1,vehLane:1,laneOff:0,centre:"dashed",centreCol:"white",
-  xmax:100,yfit:"road",ymin:-6,ymax:9,levels:"0.5, 1, 2, 3, 5, 10, 20, 50",thr:"1, 3",widthX:"10, 20, 30, 50",
+  xmax:150,yfit:"road",ymin:-6,ymax:9,levels:"0.5, 1, 3, 5, 10, 20, 50, 100",thr:"1, 3",widthX:"10, 20, 30, 50",
   showContours:true,showReqs:true,markings:null,reqs:null,reqsExample:true
 };
 let S=Object.assign({},DEFAULT);
 let rawL=null, rawR=null, textL=null, textR=null;
-try{const j=JSON.parse(localStorage.getItem(STORE)||"null"); if(j&&typeof j==="object"){Object.assign(S,j.S||{}); textL=j.textL||null; textR=j.textR||null;}}catch(e){}
+try{const j=JSON.parse(localStorage.getItem(STORE)||"null"); if(j&&typeof j==="object"){const o=j.S||{}; if(o.aimUnit===undefined&&o.aim!==undefined) o.aimUnit="pct"; if(o.method===undefined) o.method="road"; Object.assign(S,o); textL=j.textL||null; textR=j.textR||null;}}catch(e){}
 function save(){try{const o={S}; if(textL&&textL.length<1.5e6)o.textL=textL; if(textR&&textR.length<1.5e6)o.textR=textR; localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
 
 function loadText(which,text,name,silent){
@@ -425,29 +430,46 @@ function buildLamps(){
   for(const [name,y,yaw,P] of [["left",half,S.toe,PL],["right",-half,-S.toe,PR]]){
     if(S.only!=="both"&&S.only!==name) continue;
     const p0=[0-piv[0],y,S.height], pr=mv(R,p0), pos=[pr[0]+piv[0],pr[1],pr[2]];
-    const ax=lampAxes(S.aim,yaw);
-    LAMPS.push({name,px:pos[0],py:pos[1],pz:pos[2],f:mv(R,ax.f),l:mv(R,ax.l),u:mv(R,ax.u),P});
+    const hs=S.method==="hspr";
+    // HSPR applies aim and toe as an angular shift of the photometric data; road mode tilts the lamp axis
+    const ax=hs?lampAxes(0,0):lampAxes(aimPct(),yaw);
+    LAMPS.push({name,px:pos[0],py:pos[1],pz:pos[2],f:mv(R,ax.f),l:mv(R,ax.l),u:mv(R,ax.u),P,
+      aimV:hs?aimDeg():0, aimH:hs?-yaw:0});
   }
 }
+const aimDeg=()=>S.aimUnit==="pct"?Math.atan(S.aim/100)/D2R:S.aim;
+const aimPct=()=>S.aimUnit==="pct"?S.aim:Math.tan(S.aim*D2R)*100;
+/* HSPR reference lookup: H, V snapped to the 0.05° grid and clamped to H ±45°, V ±15°,
+   then read from the photometric data shifted by the aim (bilinear on the source table). */
+const HS_STEP=0.05;
+function hsprI(L,H,V){
+  let h=Math.round(H/HS_STEP)*HS_STEP, v=Math.round(V/HS_STEP)*HS_STEP;
+  h=Math.max(-45,Math.min(45,h)); v=Math.max(-15,Math.min(15,v));
+  return intensity(L.P,h-L.aimH,v-L.aimV);
+}
 function Eat(x,y){
-  let E=0; const az=S.angleSys==="azel";
+  let E=0; const az=S.angleSys==="azel", hs=S.method==="hspr";
+  const zp=hs?S.evalH:0;
   for(const L of LAMPS){
-    if(L.pz<=0) continue;
-    const vx=x-L.px, vy=y-L.py, vz=-L.pz;
+    if(L.pz<=0&&!hs) continue;
+    const vx=x-L.px, vy=y-L.py, vz=zp-L.pz;
     const f=L.f[0]*vx+L.f[1]*vy+L.f[2]*vz; if(f<=0) continue;
     const l=L.l[0]*vx+L.l[1]*vy+L.l[2]*vz, u=L.u[0]*vx+L.u[1]*vy+L.u[2]*vz;
     let H,V; if(az){H=Math.atan2(-l,f)/D2R;V=Math.atan2(u,Math.hypot(f,l))/D2R;} else {V=Math.atan2(u,f)/D2R;H=Math.atan2(-l,Math.hypot(f,u))/D2R;}
-    const I=intensity(L.P,H,V); if(!I) continue;
+    const I=hs?hsprI(L,H,V):intensity(L.P,H,V); if(!I) continue;
     const D2=vx*vx+vy*vy+vz*vz;
-    E+=I*L.pz/(D2*Math.sqrt(D2));
+    // HSPR: illuminance on a plane facing the vehicle, E = I·cos α / d², cos α = forward distance / d
+    // Road: horizontal illuminance on the road, E = I·cos θ / d², cos θ = lamp height / d
+    E+=I*(hs?vx:L.pz)/(D2*Math.sqrt(D2));
   }
   return E*S.scale;
 }
+const meets=(e,t)=>S.method==="hspr"?e>t:e>=t;
 function lampHV(L,x,y){
-  const vx=x-L.px, vy=y-L.py, vz=-L.pz;
+  const vx=x-L.px, vy=y-L.py, vz=(S.method==="hspr"?S.evalH:0)-L.pz;
   const f=L.f[0]*vx+L.f[1]*vy+L.f[2]*vz, l=L.l[0]*vx+L.l[1]*vy+L.l[2]*vz, u=L.u[0]*vx+L.u[1]*vy+L.u[2]*vz;
-  if(S.angleSys==="azel") return [Math.atan2(-l,f)/D2R,Math.atan2(u,Math.hypot(f,l))/D2R];
-  return [Math.atan2(-l,Math.hypot(f,u))/D2R,Math.atan2(u,f)/D2R];
+  const r=S.angleSys==="azel"?[Math.atan2(-l,f)/D2R,Math.atan2(u,Math.hypot(f,l))/D2R]:[Math.atan2(-l,Math.hypot(f,u))/D2R,Math.atan2(u,f)/D2R];
+  return [r[0]-L.aimH,r[1]-L.aimV]; // angles in the photometric file
 }
 
 /* ------------------------------------------------------------------ road */
@@ -477,19 +499,19 @@ if(!S.markings) buildMarkings();
 let reqSeq=1;
 function exampleReqs(){
   return [
-    {label:"Illuminance 25 m ahead on vehicle axis",type:"point",x:25,y:0,op:">=",limit:1.5},
-    {label:"Kerb-side reach, 1 lx along right edge",type:"range",y:-1.75,thr:1,op:">=",limit:35},
-    {label:"Reach on vehicle axis, 3 lx",type:"range",y:0,thr:3,op:">=",limit:20},
-    {label:"Foreground spread, 1 lx width at 10 m",type:"width",x:10,thr:1,op:">=",limit:10},
-    {label:"Oncoming lane, 50–100 m, glare on road",type:"zone",x1:50,x2:100,y1:1.75,y2:5.25,stat:"max",op:"<=",limit:1}
+    {label:"Illuminance 25 m ahead on vehicle axis",type:"point",x:25,y:0,op:">=",limit:40},
+    {label:"Reach on vehicle axis, 1 lx",type:"range",y:0,thr:1,op:">=",limit:75},
+    {label:"Kerb-side reach, 3 lx along right edge",type:"range",y:-1.75,thr:3,op:">=",limit:70},
+    {label:"Lateral spread, 3 lx width at 20 m",type:"width",x:20,thr:3,op:">=",limit:16},
+    {label:"Oncoming lane, 50–100 m, max light",type:"zone",x1:50,x2:100,y1:1.75,y2:5.25,stat:"max",op:"<=",limit:5}
   ];
 }
 if(!S.reqs) S.reqs=exampleReqs();
 const ensureIds=()=>S.reqs.forEach(r=>{if(!r.id) r.id=reqSeq++; else reqSeq=Math.max(reqSeq,r.id+1);});
 ensureIds();
 
-function rangeOn(y,thr,xMax=300,dx=0.1){let last=null; for(let x=0;x<=xMax;x+=dx){if(Eat(x,y)>=thr) last=x;} return last;}
-function widthAt(x,thr,lim=40,dy=0.05){let a=null,b=null; for(let y=-lim;y<=lim;y+=dy){if(Eat(x,y)>=thr){if(a===null)a=y; b=y;}} return a===null?null:[a,b];}
+function rangeOn(y,thr,xMax=400,dx=0.1){let last=null; for(let x=dx;x<=xMax;x+=dx){if(meets(Eat(x,y),thr)) last=x;} return last;}
+function widthAt(x,thr,lim=40,dy=0.05){let a=null,b=null; for(let y=-lim;y<=lim;y+=dy){if(meets(Eat(x,y),thr)){if(a===null)a=y; b=y;}} return a===null?null:[a,b];}
 function zoneStat(r){
   const x1=Math.min(r.x1,r.x2),x2=Math.max(r.x1,r.x2),y1=Math.min(r.y1,r.y2),y2=Math.max(r.y1,r.y2);
   const nx=Math.max(2,Math.min(200,Math.ceil((x2-x1)/0.5))), ny=Math.max(2,Math.min(80,Math.ceil((y2-y1)/0.25)));
@@ -668,13 +690,13 @@ function renderResults(){
   const thr=parseList(S.thr).slice(0,4), wx=parseList(S.widthX).slice(0,6);
   const lines=[{name:"Vehicle axis",y:0}].concat((S.markings||[]).map(m=>({name:m.name,y:+m.y})));
   // range: sample each line once, reuse for all thresholds
-  const rows=lines.map(L=>{const last=thr.map(()=>null); for(let x=0;x<=300;x+=0.1){const e=Eat(x,L.y); thr.forEach((t,k)=>{if(e>=t) last[k]=x;});} return {L,last};});
+  const rows=lines.map(L=>{const last=thr.map(()=>null); for(let x=0.1;x<=400;x+=0.1){const e=Eat(x,L.y); thr.forEach((t,k)=>{if(meets(e,t)) last[k]=x;});} return {L,last};});
   $("#rangeTbl").innerHTML=`<thead><tr><th>Line</th><th class="num">y [m]</th>${thr.map(t=>`<th class="num">${t} lx</th>`).join("")}</tr></thead><tbody>`+
     rows.map(({L,last})=>`<tr><td>${esc(L.name)}</td><td class="num mono">${fmt(L.y,2)}</td>${last.map(d=>`<td class="num mono">${d===null?"—":fmt(d,1)+" m"}</td>`).join("")}</tr>`).join("")+"</tbody>";
   const lim=Math.max(30,Math.abs(S.ymin),Math.abs(S.ymax));
   $("#widthTbl").innerHTML=`<thead><tr><th class="num">x [m]</th>${thr.map(t=>`<th class="num">${t} lx</th>`).join("")}</tr></thead><tbody>`+
     wx.map(x=>`<tr><td class="num mono">${x}</td>${thr.map(t=>{const w=widthAt(x,t,lim); return `<td class="num mono" title="${w?`right ${fmt(w[0],2)} m to left ${fmt(w[1],2)} m`:""}">${w?fmt(w[1]-w[0],1)+" m":"—"}</td>`;}).join("")}</tr>`).join("")+"</tbody>";
-  const hits=LAMPS.map(L=>{const el=Math.asin(L.f[2])/D2R; return {L,el,d:el<0?L.pz/Math.tan(-el*D2R):null};});
+  const hits=LAMPS.map(L=>{const el=Math.asin(L.f[2])/D2R+L.aimV; return {L,el,d:el<0?L.pz/Math.tan(-el*D2R):null};});
   $("#kpis").innerHTML=[
     ["E max on view",`${fmt(G.emax,1)} lx`],["at",`${fmt(G.ex,1)} m, ${fmt(G.ey,2)} m`],
     ...hits.map(h=>[`${h.L.name} axis meets road`,h.d===null?"never":`${fmt(h.d,1)} m`])
@@ -733,12 +755,17 @@ function renderInfo(){
   $("#nameR").textContent=rawR?rawR.name:S.mirrorRight?"Left file, mirrored":"Uses the left file";
   $("#metaR").innerHTML=rawR?meta(rawR,PR):""; $("#clearR").hidden=!rawR;
   $("#hint-photo").textContent=rawL.sample?"sample beam":rawL.name;
-  $("#hint-mount").textContent=`h ${S.height} m · aim ${S.aim} %`;
+  const au=S.aimUnit==="pct"?"%":"°";
+  $("#aimU").textContent=au; $("#evalHField").hidden=S.method!=="hspr";
+  $("#methodNote").textContent=S.method==="hspr"
+    ?"HSPR method (GTB / TU Darmstadt reference): illuminance on a vertical plane facing the vehicle at the evaluation height. Aim and toe shift the photometric data by an angle; pitch and roll tilt the lamps."
+    :"Road method: horizontal illuminance on the road surface. Aim and toe tilt the lamp axes.";
+  $("#hint-mount").textContent=`${S.method==="hspr"?"HSPR":"road"} · h ${S.height} m · aim ${S.aim} ${au}`;
   $("#hint-road").textContent=`${S.side} · ${(S.markings||[]).length} lines`;
   $("#hint-plot").textContent=`0–${S.xmax} m`;
-  $("#status").innerHTML=(rawL.sample?'<span class="chip ex">Sample beam loaded</span>':`<span class="chip">Beam <b>${esc(rawL.name)}</b></span>`)+
+  $("#status").innerHTML=`<span class="chip">${S.method==="hspr"?"HSPR method":"Road surface"}</span>`+(rawL.sample?'<span class="chip ex">Sample beam loaded</span>':`<span class="chip">Beam <b>${esc(rawL.name)}</b></span>`)+
     `<span class="chip">${S.side}${S.mirrorAll?" · mirrored":""}</span>`;
-  $("#plotSub").textContent=`Horizontal illuminance, lamps at h = ${S.height} m, aim ${S.aim} %, pitch ${S.pitch}°, roll ${S.roll}°`;
+  $("#plotSub").textContent=(S.method==="hspr"?`HSPR method: vertical-plane illuminance at ${S.evalH} m height`:"Road surface: horizontal illuminance")+`, lamps at h = ${S.height} m, aim ${S.aim} ${au}, pitch ${S.pitch}°, roll ${S.roll}°`;
 }
 
 /* ------------------------------------------------------------------ main loop */
@@ -756,14 +783,16 @@ function run(){
 }
 
 /* ------------------------------------------------------------------ bind controls */
-const NUM=["height","sep","aim","toe","pitch","roll","pivot","scale","laneW","ownN","oppN","vehLane","laneOff","xmax","ymin","ymax"];
-const SEL=["angleSys","only","side","centre","centreCol","yfit"], TXT=["levels","thr","widthX"], CHK=["mirrorRight","mirrorAll","showContours","showReqs"];
+const NUM=["evalH","height","sep","aim","toe","pitch","roll","pivot","scale","laneW","ownN","oppN","vehLane","laneOff","xmax","ymin","ymax"];
+const SEL=["method","aimUnit","angleSys","only","side","centre","centreCol","yfit"], TXT=["levels","thr","widthX"], CHK=["mirrorRight","mirrorAll","showContours","showReqs"];
 const ROAD=new Set(["side","laneW","ownN","oppN","vehLane","laneOff","centre","centreCol"]);
 NUM.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("input",()=>{const v=parseFloat(el.value); if(!Number.isFinite(v))return; S[k]=v;
   if(k==="ymin"||k==="ymax"){S.yfit="manual"; $("#yfit").value="manual";}
   if(ROAD.has(k)){buildMarkings(); renderMarkings(); fitY();}
   schedule(true);});});
-SEL.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("change",()=>{S[k]=el.value; if(ROAD.has(k)){buildMarkings(); renderMarkings();} fitY(); schedule(true);});});
+SEL.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("change",()=>{
+  if(k==="aimUnit"&&el.value!==S.aimUnit){S.aim=+(el.value==="pct"?Math.tan(S.aim*D2R)*100:Math.atan(S.aim/100)/D2R).toFixed(3); $("#aim").value=S.aim;}
+  S[k]=el.value; if(ROAD.has(k)){buildMarkings(); renderMarkings();} fitY(); schedule(true);});});
 TXT.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("change",()=>{S[k]=el.value; schedule(true);});});
 CHK.forEach(k=>{const el=$("#"+k); el.checked=!!S[k]; el.addEventListener("change",()=>{S[k]=el.checked; schedule(true);});});
 
@@ -822,6 +851,7 @@ function copy(text,msg){
 let tt=0; function toast(m){const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove("show"),2400);}
 
 new ResizeObserver(()=>schedule()).observe($(".plotwrap"));
+window.roadIlluminate={illuminance:(x,y)=>{buildLamps(); return Eat(x,y);}, state:S};
 renderMarkings(); fitY();
 schedule(true);
 })();
