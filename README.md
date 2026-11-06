@@ -1,6 +1,6 @@
 # Headlamp Road Illuminance
 
-`headlamp_road_illuminance.py` calculates the illuminance a vehicle's headlamps produce over a flat road. By default it uses the HSPR method (GTB / TU Darmstadt HSPR software), the same calculation as the HSPRevaluate tool; horizontal illuminance on the road surface is available as an option. It starts from the headlamp's intensity distribution, given as an IES (LM-63) file in H-V angles.
+`headlamp_road_illuminance.py` calculates the illuminance a vehicle's headlamps produce over a flat road. By default it uses the vertical planes on road method, which is the same calculation as the HSPR method (GTB / TU Darmstadt HSPR software) and the HSPRevaluate tool. Horizontal illuminance on the road surface is available as an option. It starts from the headlamp's intensity distribution, given as an IES (LM-63) file in H-V angles.
 
 It takes into account the real installation of the lamps on the vehicle:
 
@@ -22,8 +22,8 @@ Typical uses are comparing beam patterns, checking how aim or load changes the r
 The web tool (`index.html`, with an identical copy in `docs/index.html` so GitHub Pages works from either the root or the /docs folder) does the same calculation without installing anything:
 
 - Load or drag in IES files for the left lamp, and optionally a separate or mirrored right lamp. Files are read in the browser and never uploaded.
-- Choose the illuminance method: HSPR (default) or road surface.
-- Set the mounting height, lamp separation, aim (degrees or percent), toe, and vehicle pitch and roll.
+- Choose the illuminance method: vertical planes on road (default) or road surface.
+- Set the mounting height, lamp separation, aim (degrees or percent), toe, vehicle pitch and roll, and the evaluation height of the vertical planes.
 - See the road isolux plot with lane markings and a live readout of illuminance and H/V angles under the pointer.
 - Build the lane layout from traffic side, lane width and lane counts, then edit any line.
 - Add customer requirement checks (point, range, width, zone) that show pass or fail live. Requirement sets can be copied out and pasted back as JSON.
@@ -32,9 +32,9 @@ It opens with a synthetic sample beam so it works straight away. The sections be
 
 ## Illuminance method
 
-Two methods are available, in both the script (`--method`) and the web tool.
+Two methods are available, in both the script (`--method vertical` or `--method road`) and the web tool.
 
-| | HSPR (default) | Road surface |
+| | Vertical planes on road (default) | Road surface |
 | --- | --- | --- |
 | Quantity | Illuminance on a vertical plane facing the vehicle, at the evaluation height | Horizontal illuminance on the road |
 | Formula | E = I(H, V) · cos α / d², with cos α = forward distance / d | E = I(H, V) · h / d³ |
@@ -42,7 +42,7 @@ Two methods are available, in both the script (`--method`) and the web tool.
 | Intensity lookup | H and V snapped to the 0.05° grid, clamped to H ±45°, V ±15° | Bilinear from the IES table |
 | Threshold test | E > limit | E ≥ limit |
 
-The HSPR method follows the GTB Recommended Practice (Sep 2023) and the TU Darmstadt HSPR reference software, as ported in HSPRevaluate. HSPR zones A, B and D use an evaluation height of 0 m; zones C and E use 0.25 m. Values are much higher than road-surface values at the same point: at 50 m with a lamp height of 0.65 m, about 75 times higher.
+Vertical planes on road places a vertical plane facing the vehicle at every road point and calculates the illuminance on it. This is the HSPR method of the GTB Recommended Practice (Sep 2023) and the TU Darmstadt HSPR reference software, as ported in HSPRevaluate. The evaluation height is the height of the evaluation point on each plane: HSPR zones A, B and D use 0 m; zones C and E use 0.25 m. In the script `--method hspr` is accepted as an alias. Values are much higher than road-surface values at the same point: at 50 m with a lamp height of 0.65 m, about 75 times higher.
 
 Pitch and roll tilt the lamps physically in both methods. HSPR itself has no pitch or roll; with both at 0 the results match HSPRevaluate exactly.
 
@@ -254,7 +254,7 @@ For every road point and every lamp, the script carries out five steps.
 2. **Lamp frame.** v is projected on the lamp's forward, left and up axes, which already include aim, toe, pitch and roll.
 3. **Angles.** H and V are found from the local components with the chosen angle system (section 4). Points behind the lamp get zero intensity.
 4. **Intensity.** I(H, V) is interpolated bilinearly from the candela table and multiplied by `--scale` and the flux factor. Directions outside the measured range give zero.
-5. **Illuminance.** With the HSPR method (default), the illuminance from one lamp on a vertical plane facing the vehicle is:
+5. **Illuminance.** With vertical planes on road (default), the illuminance from one lamp on a vertical plane facing the vehicle is:
 
 ```math
 E = \frac{I(H,V)\,\cos\alpha}{D^{2}} = \frac{I(H,V)\,x}{D^{3}}
@@ -276,13 +276,13 @@ The lamp axes are built as:
 \mathbf{f} = (\cos\varepsilon\cos\psi,\; \cos\varepsilon\sin\psi,\; \sin\varepsilon), \quad \varepsilon = \arctan(\mathrm{aim}/100)
 ```
 
-This axis tilt applies to the road method; the HSPR method keeps the axis level and shifts the data instead. In this formula ψ is the toe angle (positive to the left in vehicle coordinates). The left axis is l = (−sin ψ, cos ψ, 0) and the up axis is u = f × l. The vehicle rotation R = R_roll · R_pitch is then applied to the axes, and to the lamp positions about the pivot.
+This axis tilt applies to the road method; vertical planes on road keeps the axis level and shifts the data instead. In this formula ψ is the toe angle (positive to the left in vehicle coordinates). The left axis is l = (−sin ψ, cos ψ, 0) and the up axis is u = f × l. The vehicle rotation R = R_roll · R_pitch is then applied to the axes, and to the lamp positions about the pivot.
 
 The flux in the file is found by integrating I over the measured range. The solid-angle element is cos V dH dV for azel and cos H dH dV for elaz.
 
 ## 11. Validation, limitations and troubleshooting
 
-**HSPR method.** Checked against the HSPRevaluate core (`hspr-core.js`) with a synthetic Type B low beam at h = 0.65 m, separation 1.4 m, aim −1°, toe 1.5° and evaluation heights 0 and 0.25 m. Point illuminance matched at all 10 test points (difference 0.000 %), and the nine zone-A ranges (1, 3 and 5 lx on lines 0, 1.5 and 3 m right) were identical in the web tool and within the 0.5 m HSPR search step in the script.
+**Vertical planes on road.** Checked against the HSPRevaluate core (`hspr-core.js`) with a synthetic Type B low beam at h = 0.65 m, separation 1.4 m, aim −1°, toe 1.5° and evaluation heights 0 and 0.25 m. Point illuminance matched at all 10 test points (difference 0.000 %), and the nine zone-A ranges (1, 3 and 5 lx on lines 0, 1.5 and 3 m right) were identical in the web tool and within the 0.5 m HSPR search step in the script.
 
 **Road method.** The script was tested with a synthetic low-beam file (Gaussian beam peaking 5° right and 1° down).
 
@@ -324,8 +324,8 @@ The flux in the file is found by integrating I over the measured range. The soli
 | `--mirror-all` | flag | off | Mirror H for all lamps (traffic side) |
 | `--only` | left / right | both | Evaluate one lamp |
 | `--angle-system` | azel / elaz | azel | H-V convention of the file |
-| `--method` | hspr / road | hspr | Illuminance method |
-| `--eval-height` | m | 0.0 | HSPR evaluation height |
+| `--method` | vertical / road | vertical | Illuminance method (`hspr` = alias of vertical) |
+| `--eval-height` | m | 0.0 | Evaluation height on the vertical planes |
 | `--aim-unit` | pct / deg | pct | Unit of `--aim` |
 | `--height` | m | required | Lamp centre height |
 | `--separation` | m | 1.40 | Lamp centre distance |
@@ -346,6 +346,15 @@ The flux in the file is found by integrating I over the measured range. The soli
 | `--road-edges` | m m | – | Road edges drawn in the plot |
 | `--csv` | file | – | Save the grid |
 | `--plot` | flag | off | Show the isolux plot |
+
+## Changes
+
+| Date | Change |
+| --- | --- |
+| 2026-11-06 | Illuminance method renamed to "Vertical planes on road" (`--method vertical`; `hspr` still accepted). In the web tool the evaluation height box moved to the end of the mounting inputs. |
+| 2026-11-06 | Vertical planes on road (HSPR method) became the default, matching HSPRevaluate; road-surface illuminance kept as an option. Aim can be given in degrees or percent. |
+| 2026-11-05 | Web tool added and published with GitHub Pages. |
+| 2026-11-04 | First version of the Python script and user manual. |
 
 ## License
 

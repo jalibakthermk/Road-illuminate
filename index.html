@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Headlamp road illuminance from IES H-V photometry with the HSPR (GTB) method: mounting height, aim, toe, pitch and roll, lane markings and customer requirement checks.">
+<meta name="description" content="Headlamp road illuminance from IES H-V photometry with the vertical planes on road (HSPR) method: mounting height, aim, toe, pitch and roll, lane markings and customer requirement checks.">
 <style>
 :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -193,9 +193,8 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
     <div class="sec-body">
       <div class="grid2">
         <label class="field" style="grid-column:1/-1"><span>Illuminance method</span>
-          <select id="method"><option value="hspr">HSPR (GTB): vertical plane facing the vehicle</option><option value="road">Road surface: horizontal plane</option></select></label>
-        <label class="field" id="evalHField"><span>Evaluation height <em>HSPR</em></span><div class="inp"><input type="number" id="evalH" step="0.05" min="0"><span class="u">m</span></div></label>
-        <label class="field"><span>Aim unit</span><select id="aimUnit"><option value="deg">Degrees (HSPR)</option><option value="pct">Percent (ECE)</option></select></label>
+          <select id="method"><option value="hspr">Vertical planes on road</option><option value="road">Road surface (horizontal plane)</option></select></label>
+        <label class="field"><span>Aim unit</span><select id="aimUnit"><option value="deg">Degrees</option><option value="pct">Percent (ECE)</option></select></label>
         <label class="field"><span>Mounting height</span><div class="inp"><input type="number" id="height" step="0.01" min="0.05"><span class="u">m</span></div></label>
         <label class="field"><span>Lamp separation</span><div class="inp"><input type="number" id="sep" step="0.01" min="0"><span class="u">m</span></div></label>
         <label class="field"><span>Vertical aim <em>− down</em></span><div class="inp"><input type="number" id="aim" step="0.1"><span class="u" id="aimU">°</span></div></label>
@@ -203,6 +202,7 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
         <label class="field"><span>Vehicle pitch <em>+ nose up</em></span><div class="inp"><input type="number" id="pitch" step="0.1"><span class="u">°</span></div></label>
         <label class="field"><span>Vehicle roll <em>+ left up</em></span><div class="inp"><input type="number" id="roll" step="0.1"><span class="u">°</span></div></label>
         <label class="field"><span>Pitch pivot x <em>rear axle &lt; 0</em></span><div class="inp"><input type="number" id="pivot" step="0.1"><span class="u">m</span></div></label>
+        <label class="field" id="evalHField"><span>Evaluation height</span><div class="inp"><input type="number" id="evalH" step="0.05" min="0"><span class="u">m</span></div></label>
       </div>
       <div class="meta" id="geomInfo"></div>
       <p class="note" id="methodNote"></p>
@@ -758,14 +758,14 @@ function renderInfo(){
   const au=S.aimUnit==="pct"?"%":"°";
   $("#aimU").textContent=au; $("#evalHField").hidden=S.method!=="hspr";
   $("#methodNote").textContent=S.method==="hspr"
-    ?"HSPR method (GTB / TU Darmstadt reference): illuminance on a vertical plane facing the vehicle at the evaluation height. Aim and toe shift the photometric data by an angle; pitch and roll tilt the lamps."
+    ?"Vertical planes on road: illuminance on a vertical plane facing the vehicle at each road point, at the evaluation height. Same calculation as the HSPR (GTB) method. Aim and toe shift the photometric data by an angle; pitch and roll tilt the lamps."
     :"Road method: horizontal illuminance on the road surface. Aim and toe tilt the lamp axes.";
-  $("#hint-mount").textContent=`${S.method==="hspr"?"HSPR":"road"} · h ${S.height} m · aim ${S.aim} ${au}`;
+  $("#hint-mount").textContent=`${S.method==="hspr"?"vertical planes":"road surface"} · h ${S.height} m · aim ${S.aim} ${au}`;
   $("#hint-road").textContent=`${S.side} · ${(S.markings||[]).length} lines`;
   $("#hint-plot").textContent=`0–${S.xmax} m`;
-  $("#status").innerHTML=`<span class="chip">${S.method==="hspr"?"HSPR method":"Road surface"}</span>`+(rawL.sample?'<span class="chip ex">Sample beam loaded</span>':`<span class="chip">Beam <b>${esc(rawL.name)}</b></span>`)+
+  $("#status").innerHTML=`<span class="chip">${S.method==="hspr"?"Vertical planes on road":"Road surface"}</span>`+(rawL.sample?'<span class="chip ex">Sample beam loaded</span>':`<span class="chip">Beam <b>${esc(rawL.name)}</b></span>`)+
     `<span class="chip">${S.side}${S.mirrorAll?" · mirrored":""}</span>`;
-  $("#plotSub").textContent=(S.method==="hspr"?`HSPR method: vertical-plane illuminance at ${S.evalH} m height`:"Road surface: horizontal illuminance")+`, lamps at h = ${S.height} m, aim ${S.aim} ${au}, pitch ${S.pitch}°, roll ${S.roll}°`;
+  $("#plotSub").textContent=(S.method==="hspr"?`Vertical planes on road: illuminance at ${S.evalH} m height`:"Road surface: horizontal illuminance")+`, lamps at h = ${S.height} m, aim ${S.aim} ${au}, pitch ${S.pitch}°, roll ${S.roll}°`;
 }
 
 /* ------------------------------------------------------------------ main loop */

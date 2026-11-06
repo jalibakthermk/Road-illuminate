@@ -56,7 +56,8 @@ MOUNTING AND ORIENTATION
       --mirror-all     -> mirror H for both lamps (RHT <-> LHT conversion)
 
 ILLUMINANCE METHOD (--method)
-    hspr (default) : HSPR / GTB reference method (TU Darmstadt HSPR software).
+    vertical (default) : vertical planes on road. Same calculation as the HSPR / GTB
+                     reference method (TU Darmstadt HSPR software; 'hspr' is an alias).
                      Illuminance on a vertical plane facing the vehicle at --eval-height,
                      E = I cos(alpha) / d^2. Aim and toe shift the photometric data by an
                      angle; H, V are read on the 0.05 deg grid. Thresholds count E > limit.
@@ -208,7 +209,7 @@ def build_lamps(args):
             continue
         p0 = np.array([0.0, y, args.height])
         pos = pivot + R_veh @ (p0 - pivot)
-        hspr = args.method == "hspr"
+        hspr = args.method == "vertical"
         aim_pct = args.aim if args.aim_unit == "pct" else math.tan(math.radians(args.aim)) * 100
         aim_deg = args.aim if args.aim_unit == "deg" else math.degrees(math.atan(args.aim / 100))
         # HSPR shifts the photometric data by the aim/toe angles; road mode tilts the lamp axis
@@ -237,7 +238,7 @@ HSPR_STEP = 0.05
 def road_illuminance(lamps, X, Y, system, scale):
     """Illuminance at road points (X, Y).
 
-    method "hspr": HSPR / GTB reference method. Illuminance on a vertical plane facing
+    method "vertical": vertical planes on road, the HSPR / GTB reference method. Illuminance on a vertical plane facing
         the vehicle at the evaluation height, E = I cos(alpha) / d^2 with cos(alpha) =
         forward distance / d. H and V are snapped to the 0.05 deg grid and clamped to
         H +-45 deg, V +-15 deg; aim and toe shift the photometric data by an angle.
@@ -246,7 +247,7 @@ def road_illuminance(lamps, X, Y, system, scale):
     E = np.zeros(np.broadcast(X, Y).shape)
     for lp in lamps:
         px, py, pz = lp["pos"]
-        hspr = lp["method"] == "hspr"
+        hspr = lp["method"] == "vertical"
         v = np.stack(np.broadcast_arrays(X - px, Y - py, np.full_like(E, lp["zp"] - pz)), axis=-1)
         D = np.linalg.norm(v, axis=-1)
         loc = v @ lp["axes"]                 # components along lamp f, l, u
@@ -264,8 +265,8 @@ def road_illuminance(lamps, X, Y, system, scale):
 
 
 def meets(lamps, E, thr):
-    """HSPR counts E > threshold; road mode counts E >= threshold."""
-    return E > thr if lamps and lamps[0]["method"] == "hspr" else E >= thr
+    """Vertical-plane method counts E > threshold (as HSPR); road mode counts E >= threshold."""
+    return E > thr if lamps and lamps[0]["method"] == "vertical" else E >= thr
 
 
 # =============================================================================
@@ -306,11 +307,12 @@ def main():
                    help="mirror H for all lamps (RHT <-> LHT)")
     p.add_argument("--only", choices=["left", "right"], help="evaluate one lamp only")
     p.add_argument("--angle-system", choices=["azel", "elaz"], default="azel")
-    p.add_argument("--method", choices=["hspr", "road"], default="hspr",
-                   help="hspr = GTB/HSPR vertical-plane illuminance (default); "
-                        "road = horizontal illuminance on the road surface")
+    p.add_argument("--method", choices=["vertical", "road", "hspr"], default="vertical",
+                   help="vertical = vertical planes on road, same as the HSPR (GTB) method (default; "
+                        "'hspr' is accepted as an alias); road = horizontal illuminance on the road surface")
     p.add_argument("--eval-height", type=float, default=0.0,
-                   help="HSPR evaluation height above the road [m] (zones A, B, D: 0; C, E: 0.25)")
+                   help="height of the vertical plane's evaluation point above the road [m] "
+                        "(HSPR zones A, B, D: 0; C, E: 0.25)")
 
     g = p.add_argument_group("mounting")
     g.add_argument("--height", type=float, required=True, help="lamp centre height [m]")
@@ -344,6 +346,8 @@ def main():
     e.add_argument("--csv", help="save grid to CSV")
     e.add_argument("--plot", action="store_true", help="isolux plot (matplotlib)")
     args = p.parse_args()
+    if args.method == "hspr":
+        args.method = "vertical"
 
     lamps = build_lamps(args)
     sysname = args.angle_system
@@ -357,8 +361,8 @@ def main():
     # ---------------- header
     print(f"\nIES           : {args.ies}" + (f" | right: {args.ies_right}" if args.ies_right else ""))
     print(f"Angle system  : {sysname}  (H + right, V + up)")
-    print("Method        : " + (f"HSPR, vertical-plane illuminance at {args.eval_height} m height"
-                               if args.method == "hspr" else "road surface, horizontal illuminance"))
+    print("Method        : " + (f"vertical planes on road (HSPR), evaluation height {args.eval_height} m"
+                               if args.method == "vertical" else "road surface, horizontal illuminance"))
     print(f"Flux in file  : {flux:.0f} lm (within measured H-V range)"
           + (f" -> scaled to {args.lumens:.0f} lm" if args.lumens else ""))
     print(f"Mounting      : h = {args.height} m, separation = {args.separation} m, "
