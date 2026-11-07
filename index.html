@@ -11,6 +11,7 @@ img{max-width:100%}
 [hidden]{display:none!important}
 </style>
 <title>Road Illuminate</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"%3E%3Cdefs%3E%3CclipPath id="t"%3E%3Crect width="48" height="48" rx="11"/%3E%3C/clipPath%3E%3C/defs%3E%0A%3Cg clip-path="url%28%23t%29"%3E%3Crect width="48" height="48" fill="%230c1016"/%3E%0A%3Cpath d="M7 48V0M41 48V0" stroke="%233a4450" stroke-width="1"/%3E%3Cpath d="M24 48V0" stroke="%23c9a640" stroke-width="1" stroke-dasharray="3 3"/%3E%0A%3Cpath d="M32 48C6 46 4 34 12 22L22 18L36 2C46 10 48 38 32 48Z" fill="%231d63b8"/%3E%0A%3Cpath d="M32 48C11 45 9 35 15 26L23 23L35 10C43 17 44 38 32 48Z" fill="%2317a6a8"/%3E%0A%3Cpath d="M32 48C15 45 14 36 18 30L24 28L34 18C40 24 40 39 32 48Z" fill="%234cbf55"/%3E%0A%3Cpath d="M32 48C19 45 18 38 21 34L26 32L33 26C37 31 37 41 32 48Z" fill="%23e2d42e"/%3E%0A%3Cellipse cx="30.5" cy="40" rx="6" ry="4.2" fill="%23f28c1a"/%3E%0A%3Cellipse cx="31" cy="39.6" rx="2.8" ry="2" fill="%23e8402a"/%3E%0A%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -42,9 +43,8 @@ body{font-family:var(--f-ui);font-size:14px;line-height:1.45;padding-left:max(16
 h1,h2,h3{margin:0;text-wrap:balance}
 .mono,input[type=number],.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px;max-width:1500px;margin:0 auto 14px}
-.brand h1{font-size:22px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
-.brand h1 .beam{width:26px;height:14px;display:inline-block;background:linear-gradient(90deg,var(--accent),transparent);clip-path:polygon(0 35%,100% 0,100% 100%,0 65%);border-left:4px solid var(--accent)}
-.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.brand{font-size:22px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:12px}
+.brand .logo{width:44px;height:44px;flex:none;border-radius:11px;box-shadow:0 0 0 1px var(--line)}
 .status{display:flex;gap:8px;flex-wrap:wrap}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);white-space:nowrap}
 .chip b{color:var(--ink);font-weight:600}
@@ -66,6 +66,7 @@ details.sec>summary .hint{font-weight:400;text-transform:none;letter-spacing:0;c
 .field>span{font-size:12px;color:var(--muted)}
 .field>span em{font-style:normal;color:var(--ink);opacity:.55;font-family:var(--f-mono);font-size:11px}
 .inp{position:relative;display:flex}
+input:disabled{opacity:.45}
 input[type=number],input[type=text],select,textarea{width:100%;min-width:0;font:inherit;font-size:13px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
 input[type=number]{padding-right:34px}
 .inp .u{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);font-family:var(--f-mono);pointer-events:none}
@@ -86,6 +87,8 @@ label.check input{accent-color:var(--accent);width:15px;height:15px}
 .btn.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:4px 6px}
 .btn.ghost:hover{color:var(--fail)}
 .btns{display:flex;flex-wrap:wrap;gap:6px}
+.btn.linkbox{display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;padding:6px 8px;font-size:13px;border-color:var(--accent);color:var(--accent)}
+.btn.linkbox:hover{background:var(--accent-soft)}
 .filebtn{position:relative;overflow:hidden}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .mk-table,.req-table,.res-table{width:100%;border-collapse:collapse;font-size:12.5px}
@@ -147,11 +150,17 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
 <body>
 
 <header class="top">
-  <div class="brand">
-    <h1><span class="beam" aria-hidden="true"></span>Road Illuminate</h1>
-    <p>Headlamp illuminance on the road from IES H-V photometry, with mounting, aim and vehicle attitude.</p>
-  </div>
-  <div class="status" id="status"></div>
+  <h1 class="brand"><svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+      <defs><clipPath id="logoClip"><rect width="48" height="48" rx="11"/></clipPath></defs>
+      <g clip-path="url(#logoClip)"><rect width="48" height="48" fill="#0c1016"/>
+      <path d="M7 48V0M41 48V0" stroke="#3a4450" stroke-width="1"/><path d="M24 48V0" stroke="#c9a640" stroke-width="1" stroke-dasharray="3 3"/>
+      <path d="M32 48C6 46 4 34 12 22L22 18L36 2C46 10 48 38 32 48Z" fill="#1d63b8"/>
+      <path d="M32 48C11 45 9 35 15 26L23 23L35 10C43 17 44 38 32 48Z" fill="#17a6a8"/>
+      <path d="M32 48C15 45 14 36 18 30L24 28L34 18C40 24 40 39 32 48Z" fill="#4cbf55"/>
+      <path d="M32 48C19 45 18 38 21 34L26 32L33 26C37 31 37 41 32 48Z" fill="#e2d42e"/>
+      <ellipse cx="30.5" cy="40" rx="6" ry="4.2" fill="#f28c1a"/>
+      <ellipse cx="31" cy="39.6" rx="2.8" ry="2" fill="#e8402a"/></g>
+    </svg>Road Illuminate</h1>
 </header>
 
 <div class="app">
@@ -184,7 +193,6 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
           <select id="only"><option value="both">Both</option><option value="left">Left only</option><option value="right">Right only</option></select></label>
         <label class="field"><span>Intensity factor</span><div class="inp"><input type="number" id="scale" step="0.05" min="0"><span class="u">×</span></div></label>
       </div>
-      <p class="note">Drop an .ies file on a box or use Load IES. Files are read in your browser and never uploaded.</p>
     </div>
   </details>
 
@@ -195,17 +203,17 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
         <label class="field" style="grid-column:1/-1"><span>Illuminance method</span>
           <select id="method"><option value="hspr">Vertical planes on road</option><option value="road">Road surface (horizontal plane)</option></select></label>
         <label class="field"><span>Aim unit</span><select id="aimUnit"><option value="deg">Degrees</option><option value="pct">Percent (ECE)</option></select></label>
+        <label class="field"><span>Vertical aim <em>− down</em></span><div class="inp"><input type="number" id="aim" step="0.1"><span class="u" id="aimU">°</span></div></label>
         <label class="field"><span>Mounting height</span><div class="inp"><input type="number" id="height" step="0.01" min="0.05"><span class="u">m</span></div></label>
         <label class="field"><span>Lamp separation</span><div class="inp"><input type="number" id="sep" step="0.01" min="0"><span class="u">m</span></div></label>
-        <label class="field"><span>Vertical aim <em>− down</em></span><div class="inp"><input type="number" id="aim" step="0.1"><span class="u" id="aimU">°</span></div></label>
         <label class="field"><span>Toe <em>+ outward</em></span><div class="inp"><input type="number" id="toe" step="0.1"><span class="u">°</span></div></label>
-        <label class="field"><span>Vehicle pitch <em>+ nose up</em></span><div class="inp"><input type="number" id="pitch" step="0.1"><span class="u">°</span></div></label>
+        <label class="field"><span>Pitch pivot x <em>− rear</em></span><div class="inp"><input type="number" id="pivot" step="0.1"><span class="u">m</span></div></label>
         <label class="field"><span>Vehicle roll <em>+ left up</em></span><div class="inp"><input type="number" id="roll" step="0.1"><span class="u">°</span></div></label>
-        <label class="field"><span>Pitch pivot x <em>rear axle &lt; 0</em></span><div class="inp"><input type="number" id="pivot" step="0.1"><span class="u">m</span></div></label>
+        <label class="field"><span>Vehicle pitch <em>+ nose up</em></span><div class="inp"><input type="number" id="pitch" step="0.1"><span class="u">°</span></div></label>
         <label class="field" id="evalHField"><span>Evaluation height</span><div class="inp"><input type="number" id="evalH" step="0.05" min="0"><span class="u">m</span></div></label>
+        <div class="field"><span>&nbsp;</span><a class="btn linkbox" id="hsprLink" href="https://jalibakthermk.github.io/HSPRevaluate/" target="_blank" rel="noopener">HSPRevaluate <span aria-hidden="true">↗</span></a></div>
       </div>
       <div class="meta" id="geomInfo"></div>
-      <p class="note" id="methodNote"></p>
     </div>
   </details>
 
@@ -225,7 +233,6 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
       <div class="btns"><button class="btn primary" type="button" id="genRoad">Rebuild markings from layout</button></div>
       <div class="mk-list" id="mkBody" aria-label="Lane markings"></div>
       <div class="btns"><button class="btn" type="button" id="addMk">Add line</button></div>
-      <p class="note">y is measured from the vehicle centreline, positive to the left. Edit any line after rebuilding.</p>
     </div>
   </details>
 
@@ -249,7 +256,7 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
 <main>
   <section class="card" aria-labelledby="plot-h">
     <div class="card-h">
-      <div><h2 id="plot-h">Isolux, top view of the road</h2><div class="sub" id="plotSub"></div></div>
+      <h2 id="plot-h">Isolux, top view of the road</h2>
       <div class="plot-tools">
         <label class="check"><input type="checkbox" id="showContours" checked>Isolux lines</label>
         <label class="check"><input type="checkbox" id="showReqs" checked>Checks on plot</label>
@@ -257,7 +264,7 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
       </div>
     </div>
     <div class="well">
-      <div class="readout" id="readout"><span>Move over the plot to read illuminance</span></div>
+      <div class="readout" id="readout"></div>
       <div class="plotwrap"><canvas id="plot" aria-label="Isolux plot of road illuminance"></canvas></div>
       <div class="legend"><span>lx</span><div class="lbar"><div class="bar" id="legBar"></div><div class="ticks" id="legTicks"></div></div></div>
     </div>
@@ -270,7 +277,7 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
 
   <section class="card" aria-labelledby="req-h">
     <div class="card-h">
-      <div><h2 id="req-h">Customer requirement checks</h2><div class="sub">Each check is evaluated live against the current beam and mounting.</div></div>
+      <h2 id="req-h">Customer requirement checks</h2>
       <div class="status" id="reqSummary"></div>
     </div>
     <div class="tblwrap">
@@ -279,7 +286,7 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
         <tbody id="reqBody"></tbody>
       </table>
     </div>
-    <div class="empty" id="reqEmpty" hidden>No checks yet. Add a point, range, width or zone check, or paste a requirement set as JSON.</div>
+    <div class="empty" id="reqEmpty" hidden>No checks yet.</div>
     <div class="req-foot">
       <div class="btns">
         <button class="btn" type="button" data-add="point">+ Point</button>
@@ -298,7 +305,6 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
         <textarea id="reqJson" spellcheck="false" aria-label="Requirement set JSON"></textarea>
         <div class="btns"><button class="btn" type="button" id="copyJson">Copy current set</button><button class="btn primary" type="button" id="applyJson">Replace checks with this JSON</button></div>
         <div class="err" id="jsonErr" hidden></div>
-        <p class="note">Format: a list of objects with <span class="mono">type</span> (point, range, width, zone), the position fields, <span class="mono">op</span> (">=" or "&lt;=") and <span class="mono">limit</span>. Keep one file per customer specification.</p>
       </div>
     </details>
   </section>
@@ -391,7 +397,7 @@ const DEFAULT={
 };
 let S=Object.assign({},DEFAULT);
 let rawL=null, rawR=null, textL=null, textR=null;
-try{const j=JSON.parse(localStorage.getItem(STORE)||"null"); if(j&&typeof j==="object"){const o=j.S||{}; if(o.aimUnit===undefined&&o.aim!==undefined) o.aimUnit="pct"; if(o.method===undefined) o.method="road"; Object.assign(S,o); textL=j.textL||null; textR=j.textR||null;}}catch(e){}
+try{const j=JSON.parse(localStorage.getItem(STORE)||"null"); if(j&&typeof j==="object"){const o=j.S||{}; if(o.aimUnit===undefined&&o.aim!==undefined) o.aimUnit="pct"; delete o.method; Object.assign(S,o); textL=j.textL||null; textR=j.textR||null;}}catch(e){}
 function save(){try{const o={S}; if(textL&&textL.length<1.5e6)o.textL=textL; if(textR&&textR.length<1.5e6)o.textR=textR; localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
 
 function loadText(which,text,name,silent){
@@ -682,7 +688,7 @@ function onMove(ev){
 }
 cv.addEventListener("pointermove",onMove);
 cv.addEventListener("pointerdown",onMove);
-cv.addEventListener("pointerleave",()=>{hover=null; drawFrame(); $("#readout").innerHTML="<span>Move over the plot to read illuminance</span>";});
+cv.addEventListener("pointerleave",()=>{hover=null; drawFrame(); $("#readout").innerHTML="";});
 
 /* ------------------------------------------------------------------ results */
 let lastEval={};
@@ -716,7 +722,7 @@ function renderReqs(){
     row.querySelector(".res").innerHTML=e.ok===null?'<span class="chip">no limit</span>':e.ok?'<span class="chip pass">Pass</span>':'<span class="chip fail">Fail</span>';
     row.querySelector(".unit").textContent=r.type==="range"||r.type==="width"?"m":"lx";});
   $("#reqEmpty").hidden=S.reqs.length>0;
-  const sum=[]; if(S.reqsExample&&S.reqs.length) sum.push('<span class="chip ex">Example checks, replace with customer values</span>');
+  const sum=[]; if(S.reqsExample&&S.reqs.length) sum.push('<span class="chip ex">Example checks</span>');
   if(S.reqs.length) sum.push(`<span class="chip pass"><b>${pass}</b> pass</span>`,`<span class="chip ${fail?"fail":""}"><b>${fail}</b> fail</span>`);
   $("#reqSummary").innerHTML=sum.join("");
   if(document.activeElement!==$("#reqJson")) $("#reqJson").value=JSON.stringify(S.reqs.map(({id,...r})=>r),null,2);
@@ -756,16 +762,10 @@ function renderInfo(){
   $("#metaR").innerHTML=rawR?meta(rawR,PR):""; $("#clearR").hidden=!rawR;
   $("#hint-photo").textContent=rawL.sample?"sample beam":rawL.name;
   const au=S.aimUnit==="pct"?"%":"°";
-  $("#aimU").textContent=au; $("#evalHField").hidden=S.method!=="hspr";
-  $("#methodNote").textContent=S.method==="hspr"
-    ?"Vertical planes on road: illuminance on a vertical plane facing the vehicle at each road point, at the evaluation height. Same calculation as the HSPR (GTB) method. Aim and toe shift the photometric data by an angle; pitch and roll tilt the lamps."
-    :"Road method: horizontal illuminance on the road surface. Aim and toe tilt the lamp axes.";
+  $("#aimU").textContent=au; $("#evalH").disabled=S.method!=="hspr";
   $("#hint-mount").textContent=`${S.method==="hspr"?"vertical planes":"road surface"} · h ${S.height} m · aim ${S.aim} ${au}`;
   $("#hint-road").textContent=`${S.side} · ${(S.markings||[]).length} lines`;
   $("#hint-plot").textContent=`0–${S.xmax} m`;
-  $("#status").innerHTML=`<span class="chip">${S.method==="hspr"?"Vertical planes on road":"Road surface"}</span>`+(rawL.sample?'<span class="chip ex">Sample beam loaded</span>':`<span class="chip">Beam <b>${esc(rawL.name)}</b></span>`)+
-    `<span class="chip">${S.side}${S.mirrorAll?" · mirrored":""}</span>`;
-  $("#plotSub").textContent=(S.method==="hspr"?`Vertical planes on road: illuminance at ${S.evalH} m height`:"Road surface: horizontal illuminance")+`, lamps at h = ${S.height} m, aim ${S.aim} ${au}, pitch ${S.pitch}°, roll ${S.roll}°`;
 }
 
 /* ------------------------------------------------------------------ main loop */

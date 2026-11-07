@@ -351,6 +351,7 @@ The flux in the file is found by integrating I over the measured range. The soli
 
 | Date | Change |
 | --- | --- |
+| 2026-11-07 | Web tool: new isolux icon in the header and browser tab, descriptive text removed, mounting inputs reordered (aim unit, vertical aim, mounting height, lamp separation, toe, pitch pivot, vehicle roll, vehicle pitch, evaluation height), link to HSPRevaluate added, and the page always opens with vertical planes on road. |
 | 2026-11-06 | Illuminance method renamed to "Vertical planes on road" (`--method vertical`; `hspr` still accepted). In the web tool the evaluation height box moved to the end of the mounting inputs. |
 | 2026-11-06 | Vertical planes on road (HSPR method) became the default, matching HSPRevaluate; road-surface illuminance kept as an option. Aim can be given in degrees or percent. |
 | 2026-11-05 | Web tool added and published with GitHub Pages. |
