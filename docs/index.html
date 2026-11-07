@@ -79,6 +79,11 @@ label.check input{accent-color:var(--accent);width:15px;height:15px}
 .drop .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .drop .lbl{font-size:12px;color:var(--muted)}
 .drop .fname{font-family:var(--f-mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.beam{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.beam:empty{display:none}
+.chip.warn{background:var(--accent-soft);color:var(--warn);border-color:transparent}
+.beam .beamdetail{width:100%;color:var(--accent)}
+.chip.type{background:var(--ink);color:var(--bg);border-color:transparent;font-weight:600}
 .meta{font-family:var(--f-mono);font-size:11px;color:var(--muted);line-height:1.6}
 .err{color:var(--fail);font-size:12px}
 .btn{font:inherit;font-size:12.5px;font-weight:600;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 10px;cursor:pointer;white-space:nowrap}
@@ -173,6 +178,7 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
         <div class="row"><span class="lbl">Left lamp (or both lamps)</span>
           <span class="btn filebtn">Load IES<input type="file" id="fileL" accept=".ies,.IES,.txt"></span></div>
         <div class="fname" id="nameL">—</div>
+        <div class="beam" id="beamL"></div>
         <div class="meta" id="metaL"></div>
         <div class="err" id="errL" hidden></div>
       </div>
@@ -181,6 +187,7 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
           <span class="btns"><button class="btn ghost" id="clearR" type="button" hidden>Remove</button>
           <span class="btn filebtn">Load IES<input type="file" id="fileR" accept=".ies,.IES,.txt"></span></span></div>
         <div class="fname" id="nameR">Uses the left file</div>
+        <div class="beam" id="beamR"></div>
         <div class="meta" id="metaR"></div>
         <div class="err" id="errR" hidden></div>
       </div>
@@ -373,6 +380,40 @@ function flux(L,sys){
   return s*dh*dv*D2R*D2R;
 }
 
+/* Beam type from the shape of the distribution (file as stored, before mirroring or aim) */
+function classifyBeam(raw){
+  const P=prepare(raw,false), peak=P.peak, lg=v=>Math.log10(Math.max(v,1e-6));
+  const Hmin=P.Hs[0], Hmax=P.Hs[P.Hs.length-1];
+  const col=h=>{ // steepest downward step in V (per 0.1°) where the column is still lit
+    let cmax=0; for(let v=-10;v<=8;v+=0.1) cmax=Math.max(cmax,intensity(P,h,v));
+    let g=0,vc=null;
+    for(let v=-10;v<=8;v+=0.1){const a=intensity(P,h,v); if(a<0.05*cmax||a<1) continue; const d=lg(a)-lg(intensity(P,h,v+0.1)); if(d>g){g=d;vc=v+0.05;}}
+    return {g,vc};
+  };
+  const hs=[-8,-6,-4,-2.5,2.5,4,6,8].filter(h=>h>=Hmin&&h<=Hmax);
+  const cols=hs.map(h=>Object.assign({h},col(h)));
+  const SHARP=0.12, sharp=cols.filter(c=>c.g>=SHARP);
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  const L=sharp.filter(c=>c.h<0), R=sharp.filter(c=>c.h>0);
+  const gMax=Math.max(0,...cols.map(c=>c.g));
+  // width of the beam at 10 % of peak along the peak row
+  let w0=null,w1=null; for(let h=Hmin;h<=Hmax;h+=0.25){if(intensity(P,h,P.pV)>=0.1*peak){if(w0===null)w0=h; w1=h;}}
+  const w10=w0===null?0:w1-w0;
+  const kcd=Math.round(peak/1000);
+  const out={type:"Unclear",side:null,detail:[]};
+  if(sharp.length>=Math.ceil(cols.length/2) && L.length && R.length){
+    const vL=mean(L.map(c=>c.vc)), vR=mean(R.map(c=>c.vc)), d=vR-vL;
+    out.detail.unshift(`cut-off gradient ${gMax.toFixed(2)} per 0.1°`, `cut-off left ${fmt(vL,1)}°, right ${fmt(vR,1)}°`);
+    if(d>=0.3){out.type="Low beam"; out.side="RHT";}
+    else if(d<=-0.3){out.type="Low beam"; out.side="LHT";}
+    else if(w10>=40||peak<15000){out.type="Fog lamp"; out.detail.push(`10 % width ${fmt(w10,0)}°`);}
+    else {out.type="Low beam"; out.side="flat cut-off"; out.detail.push(`10 % width ${fmt(w10,0)}°`);}
+  } else if(Math.abs(P.pH)<=5 && P.pV>-2.5 && P.pV<2.5){
+    out.type="High beam"; out.detail.unshift(`no sharp cut-off (max gradient ${gMax.toFixed(2)} per 0.1°)`);
+  } else out.detail.unshift(`max gradient ${gMax.toFixed(2)} per 0.1°`);
+  return out;
+}
+
 /* Synthetic RHT low beam so the tool opens in a working state */
 function sampleIES(){
   const H=[],V=[];for(let h=-45;h<=45.0001;h+=0.5)H.push(+h.toFixed(2));for(let v=-20;v<=10.0001;v+=0.25)V.push(+v.toFixed(2));
@@ -404,6 +445,7 @@ function loadText(which,text,name,silent){
   const err=$(which==="L"?"#errL":"#errR");
   try{
     const raw=parseIES(text,name);
+    raw.beam=classifyBeam(raw);
     if(which==="L"){rawL=raw;textL=text;}else{rawR=raw;textR=text;}
     err.hidden=true; return true;
   }catch(e){ if(!silent){err.textContent=e.message; err.hidden=false;} return false; }
@@ -411,6 +453,7 @@ function loadText(which,text,name,silent){
 if(textL) loadText("L",textL,(()=>{try{return JSON.parse(localStorage.getItem(STORE)).S.nameL}catch(e){return "Saved file"}})(),true);
 if(textR) loadText("R",textR,(()=>{try{return JSON.parse(localStorage.getItem(STORE)).S.nameR}catch(e){return "Saved file"}})(),true);
 if(!rawL){rawL=sampleIES(); textL=null;}
+if(!rawL.beam) rawL.beam=classifyBeam(rawL);
 
 /* ------------------------------------------------------------------ geometry */
 function mul(A,B){const C=[];for(let i=0;i<3;i++){C.push([]);for(let j=0;j<3;j++)C[i].push(A[i][0]*B[0][j]+A[i][1]*B[1][j]+A[i][2]*B[2][j]);}return C;}
@@ -755,11 +798,22 @@ function renderMarkings(){
     <span></span></div>`).join("");
 }
 
+function beamChips(raw){
+  const b=raw.beam; if(!b) return "";
+  let side=b.side;
+  if(S.mirrorAll&&(side==="RHT"||side==="LHT")) side=(side==="RHT"?"LHT":"RHT")+" (mirrored)";
+  const label=b.type+(side?` · ${side}`:"");
+  let html=`<span class="chip type" title="${esc(b.detail.join(" · "))}">${esc(label)}</span>`;
+  const used=S.mirrorAll?(b.side==="RHT"?"LHT":b.side==="LHT"?"RHT":null):b.side;
+  if(used&&(used==="RHT"||used==="LHT")&&used!==S.side) html+=`<span class="chip warn">Road is ${S.side}</span>`;
+  return html+`<div class="meta beamdetail">${b.detail.map(esc).join(" · ")}</div>`;
+}
 function renderInfo(){
   const meta=(raw,P)=>{if(!raw)return ""; const H=P.Hs,V=P.Vs; return `Type ${raw.ptype===2?"B":raw.ptype===3?"A":raw.ptype} · H ${fmt(H[0],1)}…${fmt(H[H.length-1],1)}° (${H.length}) · V ${fmt(V[0],1)}…${fmt(V[V.length-1],1)}° (${V.length})<br>peak ${Math.round(P.peak).toLocaleString()} cd at H ${fmt(P.pH,1)}°, V ${fmt(P.pV,2)}° · flux ${Math.round(flux(P,S.angleSys))} lm`;};
   $("#nameL").textContent=rawL.name; $("#metaL").innerHTML=meta(rawL,PL);
   $("#nameR").textContent=rawR?rawR.name:S.mirrorRight?"Left file, mirrored":"Uses the left file";
   $("#metaR").innerHTML=rawR?meta(rawR,PR):""; $("#clearR").hidden=!rawR;
+  $("#beamL").innerHTML=beamChips(rawL); $("#beamR").innerHTML=rawR?beamChips(rawR):"";
   $("#hint-photo").textContent=rawL.sample?"sample beam":rawL.name;
   const au=S.aimUnit==="pct"?"%":"°";
   $("#aimU").textContent=au; $("#evalH").disabled=S.method!=="hspr";

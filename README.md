@@ -22,6 +22,7 @@ Typical uses are comparing beam patterns, checking how aim or load changes the r
 The web tool (`index.html`, with an identical copy in `docs/index.html` so GitHub Pages works from either the root or the /docs folder) does the same calculation without installing anything:
 
 - Load or drag in IES files for the left lamp, and optionally a separate or mirrored right lamp. Files are read in the browser and never uploaded.
+- See the detected beam type of each file: low beam (RHT, LHT or flat cut-off), high beam or fog lamp, with the cut-off gradient and cut-off height that led to it.
 - Choose the illuminance method: vertical planes on road (default) or road surface.
 - Set the mounting height, lamp separation, aim (degrees or percent), toe, vehicle pitch and roll, and the evaluation height of the vertical planes.
 - See the road isolux plot with lane markings and a live readout of illuminance and H/V angles under the pointer.
@@ -351,6 +352,7 @@ The flux in the file is found by integrating I over the measured range. The soli
 
 | Date | Change |
 | --- | --- |
+| 2026-11-07 | Web tool detects the beam type of each loaded file (low beam RHT / LHT / flat cut-off, high beam, fog lamp) from its cut-off gradient, cut-off height left and right, peak and width, and warns when the beam's traffic side differs from the road layout. |
 | 2026-11-07 | Web tool: new isolux icon in the header and browser tab, descriptive text removed, mounting inputs reordered (aim unit, vertical aim, mounting height, lamp separation, toe, pitch pivot, vehicle roll, vehicle pitch, evaluation height), link to HSPRevaluate added, and the page always opens with vertical planes on road. |
 | 2026-11-06 | Illuminance method renamed to "Vertical planes on road" (`--method vertical`; `hspr` still accepted). In the web tool the evaluation height box moved to the end of the mounting inputs. |
 | 2026-11-06 | Vertical planes on road (HSPR method) became the default, matching HSPRevaluate; road-surface illuminance kept as an option. Aim can be given in degrees or percent. |
