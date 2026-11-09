@@ -27,7 +27,7 @@ The web tool (`index.html`, with an identical copy in `docs/index.html` so GitHu
 - Set the mounting height, lamp separation, aim (degrees or percent), toe, vehicle pitch and roll, and the evaluation height of the vertical planes.
 - See the road isolux plot with lane markings and a live readout of illuminance and H/V angles under the pointer.
 - Build the lane layout from traffic side, lane width and lane counts, then edit any line.
-- Add customer requirement checks (point, range, width, zone) that show pass or fail live. Requirement sets can be copied out and pasted back as JSON.
+- Add customer requirement checks (point, range, width, zone) that show pass or fail live. Load a requirement set from a JSON file or paste it, and export the checks with measured values and pass/fail as a table (copy for Excel/Word, or download CSV). `examples/lowbeam_customer_requirements.json` is a complete low-beam customer set.
 
 It opens with a synthetic sample beam so it works straight away. The sections below describe the Python script.
 
@@ -352,6 +352,7 @@ The flux in the file is found by integrating I over the measured range. The soli
 
 | Date | Change |
 | --- | --- |
+| 2026-11-09 | Web tool: load a requirement set from a JSON file, export the customer checks with measured values and results as a table (copy for Excel/Word, or download CSV), and copyright and license footer. Example customer low-beam requirement set added in `examples/`. |
 | 2026-11-07 | Web tool detects the beam type of each loaded file (low beam RHT / LHT / flat cut-off, high beam, fog lamp) from its cut-off gradient, cut-off height left and right, peak and width, and warns when the beam's traffic side differs from the road layout. |
 | 2026-11-07 | Web tool: new isolux icon in the header and browser tab, descriptive text removed, mounting inputs reordered (aim unit, vertical aim, mounting height, lamp separation, toe, pitch pivot, vehicle roll, vehicle pitch, evaluation height), link to HSPRevaluate added, and the page always opens with vertical planes on road. |
 | 2026-11-06 | Illuminance method renamed to "Vertical planes on road" (`--method vertical`; `hspr` still accepted). In the web tool the evaluation height box moved to the end of the mounting inputs. |

@@ -147,6 +147,9 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
 .req-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:12px 16px}
 .empty{padding:22px 16px;color:var(--muted);font-size:13px}
 .note{font-size:12px;color:var(--muted)}
+.foot{max-width:1500px;margin:28px auto 0;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+.foot a{color:var(--muted)}
+.foot a:hover{color:var(--accent)}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
 .toast.show{opacity:1}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -302,6 +305,9 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
         <button class="btn" type="button" data-add="zone">+ Zone</button>
       </div>
       <div class="btns">
+        <span class="btn filebtn">Load JSON<input type="file" id="reqFile" accept=".json,application/json"></span>
+        <button class="btn" type="button" id="copyTable">Copy as table</button>
+        <button class="btn" type="button" id="dlCsv">Download CSV</button>
         <button class="btn" type="button" id="loadExample">Load example set</button>
         <button class="btn" type="button" id="clearReqs">Clear all</button>
       </div>
@@ -317,6 +323,7 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
   </section>
 </main>
 </div>
+<footer class="foot">© 2026 Jalib Akther · <a href="https://github.com/jalibakthermk/Road-illuminate/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a></footer>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -871,12 +878,55 @@ $("#reqBody").addEventListener("click",e=>{const b=e.target.closest("[data-del]"
 $("#loadExample").addEventListener("click",()=>{S.reqs=exampleReqs(); ensureIds(); S.reqsExample=true; schedule(); toast("Example checks loaded");});
 $("#clearReqs").addEventListener("click",()=>{S.reqs=[]; S.reqsExample=false; schedule();});
 $("#copyJson").addEventListener("click",()=>copy($("#reqJson").value,"Requirement set copied"));
-$("#applyJson").addEventListener("click",()=>{const err=$("#jsonErr");
-  try{const a=JSON.parse($("#reqJson").value); if(!Array.isArray(a)) throw new Error("The JSON must be a list of checks.");
+function applyReqJson(text,from){const err=$("#jsonErr");
+  try{let a=JSON.parse(text); if(a&&!Array.isArray(a)&&Array.isArray(a.checks)) a=a.checks;
+    if(!Array.isArray(a)) throw new Error("The JSON must be a list of checks.");
     const ok=a.filter(r=>r&&["point","range","width","zone"].includes(r.type));
     if(!ok.length) throw new Error("No valid checks found. Each needs a type of point, range, width or zone.");
-    S.reqs=ok.map(r=>Object.assign({},REQ_DEFAULTS[r.type],r,{id:reqSeq++})); S.reqsExample=false; err.hidden=true; schedule(); toast(`${ok.length} checks loaded`);}
-  catch(e){err.textContent="Could not read the JSON: "+e.message; err.hidden=false;}});
+    S.reqs=ok.map(r=>Object.assign({},REQ_DEFAULTS[r.type],r,{id:reqSeq++})); S.reqsExample=false; err.hidden=true; schedule(); toast(`${ok.length} checks loaded${from?" from "+from:""}`);}
+  catch(e){err.textContent="Could not read the JSON: "+e.message; err.hidden=false; err.closest("details").open=true;}}
+$("#applyJson").addEventListener("click",()=>applyReqJson($("#reqJson").value));
+$("#reqFile").addEventListener("change",e=>{const f=e.target.files[0]; e.target.value=""; if(!f)return;
+  const rd=new FileReader(); rd.onload=()=>applyReqJson(String(rd.result),f.name); rd.readAsText(f);});
+
+/* customer checks as a table: header block + one row per check with measured value and result */
+function reqWhere(r){const n=v=>fmt(+v,2).replace(/\.?0+$/,""), m=v=>n(v)+" m";
+  if(r.type==="point") return `x ${m(r.x)}, y ${m(r.y)}`;
+  if(r.type==="range") return `line y ${m(r.y)}, at ${r.thr} lx`;
+  if(r.type==="width") return `x ${m(r.x)}, at ${r.thr} lx`;
+  return `x ${n(Math.min(r.x1,r.x2))}–${m(Math.max(r.x1,r.x2))}, y ${n(Math.min(r.y1,r.y2))}…${m(Math.max(r.y1,r.y2))}, ${r.stat||"max"}`;}
+function reqRows(){
+  const unit=r=>r.type==="range"||r.type==="width"?"m":"lx";
+  const head=["#","Requirement","Source","Type","Where","Limit","Measured","Result"];
+  const rows=S.reqs.map((r,i)=>{const e=lastEval[r.id]||evalReq(r);
+    return [i+1,r.label||"",r.source||"",r.type,reqWhere(r),`${r.op==="<="?"≤":"≥"} ${r.limit} ${unit(r)}`,e.txt,e.ok===null?"no limit":e.ok?"Pass":"Fail"];});
+  const pass=rows.filter(r=>r[7]==="Pass").length, fail=rows.filter(r=>r[7]==="Fail").length;
+  const meta=[["Beam",rawL.name+(rawR?" / "+rawR.name:"")],["Method",S.method==="hspr"?`Vertical planes on road, evaluation height ${S.evalH} m`:"Road surface (horizontal)"],
+    ["Mounting",`h ${S.height} m, separation ${S.sep} m, aim ${S.aim} ${S.aimUnit==="pct"?"%":"°"}, toe ${S.toe}°, pitch ${S.pitch}°, roll ${S.roll}°`],
+    ["Traffic side",S.side+(S.mirrorAll?" (beam mirrored)":"")],["Summary",`${pass} pass, ${fail} fail of ${rows.length}`],["Date",new Date().toISOString().slice(0,10)]];
+  return {meta,head,rows};
+}
+$("#copyTable").addEventListener("click",()=>{const {meta,head,rows}=reqRows();
+  const tsv=[...meta.map(m=>m.join("\t")),"",head.join("\t"),...rows.map(r=>r.join("\t"))].join("\n");
+  copy(tsv,`Table copied: ${rows.length} checks. Paste into Excel or Word.`);});
+$("#dlCsv").addEventListener("click",()=>{const {meta,head,rows}=reqRows();
+  const q=v=>{v=String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const csv="\ufeff"+[...meta.map(m=>m.map(q).join(",")),"",head.map(q).join(","),...rows.map(r=>r.map(q).join(","))].join("\r\n");
+  const name=`customer-checks-${new Date().toISOString().slice(0,10)}.csv`;
+  saveFile(name,csv,"text/csv;charset=utf-8");});
+/* Inside Claude the viewer saves through the downloads capability; on a normal web page a plain download link is used */
+const dlCap=(window.claude&&typeof window.claude.use==="function")?window.claude.use("downloads").catch(()=>null):Promise.resolve(null);
+async function saveFile(name,data,type){
+  const cap=await dlCap;
+  if(cap){
+    try{await cap.save({filename:name,data}); toast("CSV saved");}
+    catch(e){toast(e&&e.code==="declined"?"Download cancelled":"Download is not available here. Use Copy as table instead.");}
+    return;
+  }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([data],{type}));
+  a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000); toast("CSV download started");
+}
 
 // files
 function handleFile(which,file){
