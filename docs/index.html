@@ -14,152 +14,220 @@ img{max-width:100%}
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"%3E%3Cdefs%3E%3CclipPath id="t"%3E%3Crect width="48" height="48" rx="11"/%3E%3C/clipPath%3E%3C/defs%3E%0A%3Cg clip-path="url%28%23t%29"%3E%3Crect width="48" height="48" fill="%230c1016"/%3E%0A%3Cpath d="M7 48V0M41 48V0" stroke="%233a4450" stroke-width="1"/%3E%3Cpath d="M24 48V0" stroke="%23c9a640" stroke-width="1" stroke-dasharray="3 3"/%3E%0A%3Cpath d="M32 48C6 46 4 34 12 22L22 18L36 2C46 10 48 38 32 48Z" fill="%231d63b8"/%3E%0A%3Cpath d="M32 48C11 45 9 35 15 26L23 23L35 10C43 17 44 38 32 48Z" fill="%2317a6a8"/%3E%0A%3Cpath d="M32 48C15 45 14 36 18 30L24 28L34 18C40 24 40 39 32 48Z" fill="%234cbf55"/%3E%0A%3Cpath d="M32 48C19 45 18 38 21 34L26 32L33 26C37 31 37 41 32 48Z" fill="%23e2d42e"/%3E%0A%3Cellipse cx="30.5" cy="40" rx="6" ry="4.2" fill="%23f28c1a"/%3E%0A%3Cellipse cx="31" cy="39.6" rx="2.8" ry="2" fill="%23e8402a"/%3E%0A%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Semi+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
 <style>
-/* Layout: instrument console. Control rail on the left, a dark photometric "well" for the road plot,
-   results and customer checks stacked beneath it. Stacks to one column on phones. */
+/* Bench layout (shared with beamSynth): a control rail that stays in view, results on the right read
+   top-down as summary, road plot, road performance, customer checks. Dark panels are the plot only. */
 :root{
-  --bg:#eef1f4; --panel:#ffffff; --field:#f6f8fa; --ink:#121a21; --muted:#5a6672; --line:#d6dce2;
-  --accent:#b3620b; --accent-ink:#ffffff; --accent-soft:#f6e7d4;
-  --pass:#1d7a4b; --pass-soft:#dcf1e5; --fail:#b3261e; --fail-soft:#f8dedb; --warn:#8a6100;
-  --well:#0c0f13; --well-ink:#a9b4bf;
-  --f-ui:"Archivo",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
-  --r:8px;
+  --bg:#f3f5f6; --surface:#ffffff; --sunk:#e9edf0; --ink:#15212b; --muted:#55656f; --line:#d5dce1; --line-soft:#e6ebee;
+  --accent:#9a5600; --accent-ink:#ffffff; --accent-soft:#f7e9d3;
+  --pass:#1f7a45; --fail:#c0332a; --info:#6b7b88; --warn:#8a5a00;
+  --plot-bg:#0d151d; --plot-ink:#c7d4de; --plot-dim:#8494a1; --plot-grid:rgba(199,212,222,.13); --plot-axis:rgba(199,212,222,.45);
+  --f-display:"Saira Semi Condensed","Arial Narrow",sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0e1216; --panel:#151a20; --field:#10151a; --ink:#e5eaef; --muted:#93a0ac; --line:#28313a;
-  --accent:#f0a33a; --accent-ink:#1b1206; --accent-soft:#3a2a14;
-  --pass:#4fc48b; --pass-soft:#123222; --fail:#ff7d73; --fail-soft:#3b1716; --warn:#e8c25a;
-  --well:#090b0e; --well-ink:#a9b4bf; color-scheme:dark;}}
+  --bg:#0b1117; --surface:#121b23; --sunk:#0c141b; --ink:#e3e9ee; --muted:#93a3af; --line:#25343f; --line-soft:#1b2832;
+  --accent:#f0a43a; --accent-ink:#1b1206; --accent-soft:#33260f;
+  --pass:#4cc27a; --fail:#ff6b5d; --info:#8c9daa; --warn:#e8c25a; color-scheme:dark;}}
 :root[data-theme="dark"]{
-  --bg:#0e1216; --panel:#151a20; --field:#10151a; --ink:#e5eaef; --muted:#93a0ac; --line:#28313a;
-  --accent:#f0a33a; --accent-ink:#1b1206; --accent-soft:#3a2a14;
-  --pass:#4fc48b; --pass-soft:#123222; --fail:#ff7d73; --fail-soft:#3b1716; --warn:#e8c25a;
-  --well:#090b0e; --well-ink:#a9b4bf; color-scheme:dark;}
-html,body{background:var(--bg);color:var(--ink)}
-body{font-family:var(--f-ui);font-size:14px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+  --bg:#0b1117; --surface:#121b23; --sunk:#0c141b; --ink:#e3e9ee; --muted:#93a3af; --line:#25343f; --line-soft:#1b2832;
+  --accent:#f0a43a; --accent-ink:#1b1206; --accent-soft:#33260f;
+  --pass:#4cc27a; --fail:#ff6b5d; --info:#8c9daa; --warn:#e8c25a; color-scheme:dark;}
 *{box-sizing:border-box}
-h1,h2,h3{margin:0;text-wrap:balance}
-.mono,input[type=number],.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
-header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px;max-width:1500px;margin:0 auto 14px}
-.brand{font-size:22px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:12px}
-.brand .logo{width:44px;height:44px;flex:none;border-radius:11px;box-shadow:0 0 0 1px var(--line)}
-.status{display:flex;gap:8px;flex-wrap:wrap}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);white-space:nowrap}
-.chip b{color:var(--ink);font-weight:600}
-.chip.pass{background:var(--pass-soft);color:var(--pass);border-color:transparent}
-.chip.fail{background:var(--fail-soft);color:var(--fail);border-color:transparent}
-.chip.ex{background:var(--accent-soft);color:var(--accent);border-color:transparent}
-.app{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;max-width:1500px;margin:0 auto;align-items:start}
-@media (max-width:920px){.app{grid-template-columns:minmax(0,1fr)} main{order:-1}}
-aside.rail{display:flex;flex-direction:column;gap:10px;min-width:0}
-details.sec{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
-details.sec>summary{list-style:none;cursor:pointer;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
-details.sec>summary::-webkit-details-marker{display:none}
-details.sec>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
-details.sec[open]>summary::after{transform:rotate(-135deg)}
-details.sec>summary .hint{font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:12px;margin-left:auto;margin-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
-.sec-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
-.field{display:flex;flex-direction:column;gap:3px;min-width:0}
-.field>span{font-size:12px;color:var(--muted)}
-.field>span em{font-style:normal;color:var(--ink);opacity:.55;font-family:var(--f-mono);font-size:11px}
-.inp{position:relative;display:flex}
-input:disabled{opacity:.45}
-input[type=number],input[type=text],select,textarea{width:100%;min-width:0;font:inherit;font-size:13px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
-input[type=number]{padding-right:34px}
-.inp .u{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted);font-family:var(--f-mono);pointer-events:none}
-textarea{font-family:var(--f-mono);font-size:12px;min-height:110px;resize:vertical}
-input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-label.check{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
-label.check input{accent-color:var(--accent);width:15px;height:15px}
-.drop{border:1.5px dashed var(--line);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s,background .15s}
-.drop.over{border-color:var(--accent);background:var(--accent-soft)}
-.drop .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.drop .lbl{font-size:12px;color:var(--muted)}
-.drop .fname{font-family:var(--f-mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.beam{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
-.beam:empty{display:none}
-.chip.warn{background:var(--accent-soft);color:var(--warn);border-color:transparent}
-.beam .beamdetail{width:100%;color:var(--accent)}
-.chip.type{background:var(--ink);color:var(--bg);border-color:transparent;font-weight:600}
-.meta{font-family:var(--f-mono);font-size:11px;color:var(--muted);line-height:1.6}
-.err{color:var(--fail);font-size:12px}
-.btn{font:inherit;font-size:12.5px;font-weight:600;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 10px;cursor:pointer;white-space:nowrap}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 40px}
+.wrap{max-width:1440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.bench{display:grid;grid-template-columns:372px minmax(0,1fr);gap:20px;align-items:start}
+h1,h2{text-wrap:balance}
+
+/* ---- control rail ---- */
+aside{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-width:0;display:flex;flex-direction:column;
+  position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:hidden}
+aside header{padding:12px 14px;border-bottom:1px solid var(--line)}
+h1{font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:.01em;margin:0;line-height:1}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:32px;height:32px;flex:none}
+.rail-body{overflow-y:auto;overscroll-behavior:contain;padding:14px 14px 10px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--sunk);border-radius:7px;padding:3px;gap:3px}
+.seg button{font:600 13.5px var(--f-body);border:0;border-radius:5px;padding:8px 4px;background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label.f,div.f{display:flex;flex-direction:column;gap:4px;font-size:13.5px;color:var(--muted);min-width:0}
+label.f small{font-size:12.5px;color:var(--muted)}
+input,select,textarea{font:15px var(--f-body);font-variant-numeric:tabular-nums;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:7px 9px;width:100%;min-width:0}
+input:hover,select:hover,textarea:hover{border-color:var(--muted)}
+input:disabled{opacity:.5}
+textarea{font:12px/1.5 var(--f-mono);resize:vertical;white-space:pre;overflow:auto;tab-size:2;background:var(--sunk);min-height:150px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.mono{font-family:var(--f-mono);font-size:13px}
+.btnrow{display:flex;flex-wrap:wrap;gap:6px}
+.btn{font:600 14px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:5px;padding:7px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;position:relative;white-space:nowrap}
 .btn:hover{border-color:var(--muted)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.btn.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:4px 6px}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted);padding:4px 7px}
 .btn.ghost:hover{color:var(--fail)}
-.btns{display:flex;flex-wrap:wrap;gap:6px}
-.btn.linkbox{display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;padding:6px 8px;font-size:13px;border-color:var(--accent);color:var(--accent)}
-.btn.linkbox:hover{background:var(--accent-soft)}
-.filebtn{position:relative;overflow:hidden}
-.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
-.mk-table,.req-table,.res-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.btn.link{color:var(--accent);border-color:var(--accent)}
+.btn.link:hover{background:var(--accent-soft)}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.drop{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;border:1.5px dashed var(--line);border-radius:7px;padding:12px 10px;cursor:pointer;background:var(--sunk);text-align:center}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+.drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.drop-t{font-weight:600;font-size:14.5px;color:var(--ink)}
+.drop-s{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.lampcard{display:flex;flex-direction:column;gap:6px}
+.err{color:var(--fail);font-size:13px;font-weight:600}
+.meta{font:12px/1.55 var(--f-mono);color:var(--muted)}
+.beam{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.beam:empty{display:none}
+.beam .beamdetail{width:100%;color:var(--accent)}
+.chip{display:inline-flex;align-items:center;gap:5px;font:600 13px var(--f-body);padding:2px 9px;border-radius:99px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.chip.type{background:var(--ink);color:var(--bg)}
+.chip.warn{background:var(--accent-soft);color:var(--warn)}
+.chip.ex{background:var(--accent-soft);color:var(--accent)}
+.chk{display:flex;align-items:center;gap:8px;font-size:14.5px;cursor:pointer}
+.chk input{width:17px;height:17px;accent-color:var(--accent);flex:none}
+
+/* collapsible setting groups: the header carries the current values, so a closed group still tells you its state */
+.secs{display:flex;flex-direction:column;border-top:1px solid var(--line-soft)}
+details.sec{border-bottom:1px solid var(--line-soft)}
+details.sec>summary{list-style:none;display:flex;align-items:baseline;gap:10px;padding:10px 2px 10px 18px;cursor:pointer;position:relative;user-select:none}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::before{content:"";position:absolute;left:3px;top:50%;width:6px;height:6px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:translateY(-70%) rotate(-45deg);transition:transform .15s}
+details.sec[open]>summary::before{transform:translateY(-85%) rotate(45deg)}
+details.sec>summary:hover .st{color:var(--accent)}
+.st{font-weight:600;font-size:14.5px;color:var(--ink);flex:none}
+.sv{font-size:13px;color:var(--muted);margin-left:auto;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details.sec[open] .sv{visibility:hidden}
+.sb{display:flex;flex-direction:column;gap:10px;padding:2px 0 14px}
 .mk-list{display:flex;flex-direction:column;gap:8px}
-.mk{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:4px 6px;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.mk{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:4px 6px;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line-soft)}
 .mk .nm{grid-column:1/4}
-.mk input,.mk select{padding:4px 6px;font-size:12px}
-.mk input[type=number]{padding-right:6px}
-.swatch{width:10px;height:10px;border-radius:2px;display:inline-block;border:1px solid var(--line)}
-main{display:flex;flex-direction:column;gap:16px;min-width:0}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);min-width:0}
-.card-h{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:12px 16px;border-bottom:1px solid var(--line)}
-.card-h h2{font-size:15px;font-weight:600}
-.card-h .sub{color:var(--muted);font-size:12.5px}
-.well{background:var(--well);border-radius:0 0 var(--r) var(--r);padding:10px 10px 12px;color:var(--well-ink)}
-.readout{display:flex;flex-wrap:wrap;gap:4px 18px;font-family:var(--f-mono);font-size:12px;min-height:20px;padding:0 4px 6px;color:var(--well-ink)}
-.readout b{color:#f2f5f8;font-weight:500}
-.plotwrap{position:relative;width:100%;height:clamp(300px,52vh,520px)}
-#plot{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
-.legend{display:flex;align-items:center;gap:10px;padding:10px 4px 0;font-family:var(--f-mono);font-size:11px}
-.legend .bar{position:relative;flex:1;height:10px;border-radius:2px;min-width:0}
-.legend .ticks{position:relative;height:14px;margin-top:3px}
-.legend .ticks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
-.legend .lbar{flex:1;min-width:0}
-.plot-tools{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
-.plot-tools label.check{font-size:12.5px}
-.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;padding:14px 16px}
-.res-grid h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px}
-.res-table th{text-align:left;font-weight:500;color:var(--muted);font-size:11.5px;padding:4px 6px;border-bottom:1px solid var(--line)}
-.res-table td{padding:5px 6px;border-bottom:1px solid var(--line)}
-.res-table td.num,.res-table th.num{text-align:right}
-.res-table tr:last-child td{border-bottom:0}
-.kpis{display:flex;flex-wrap:wrap;gap:6px 22px;padding:12px 16px 0}
-.kpi{display:flex;flex-direction:column}
-.kpi span{font-size:11.5px;color:var(--muted)}
-.kpi b{font-family:var(--f-mono);font-size:17px;font-weight:500}
-.tblwrap{overflow-x:auto}
-.req-table th{text-align:left;font-weight:500;color:var(--muted);font-size:11.5px;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
-.req-table td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
-.req-table td input,.req-table td select{padding:4px 6px;font-size:12px}
+.mk input,.mk select{padding:5px 7px;font-size:14px}
+.inp{position:relative;display:flex}
+.inp .u{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12.5px;color:var(--muted);pointer-events:none}
+.inp input{padding-right:26px}
+
+/* ---- results ---- */
+main{display:flex;flex-direction:column;gap:20px;min-width:0}
+.summary{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.kv{grid-column:span 2;padding:11px 14px 12px;min-width:0;border-right:1px solid var(--line-soft);border-top:1px solid var(--line-soft);margin:-1px -1px 0 0}
+.kv b{display:block;font:400 13px var(--f-body);color:var(--muted)}
+.kv span{display:block;font:600 21px/1.25 var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kv em{display:block;font-style:normal;font-size:12.5px;color:var(--muted);line-height:1.35;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kv.verdict{grid-column:span 4;padding:14px 16px 14px 20px;position:relative;border-bottom:1px solid var(--line)}
+.kv.verdict::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--info)}
+.kv.verdict.ok::before{background:var(--pass)} .kv.verdict.bad::before{background:var(--fail)}
+.kv.verdict span{font-size:27px;line-height:1.15}
+.kv.verdict.ok span{color:var(--pass)} .kv.verdict.bad span{color:var(--fail)}
+.screen{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;min-width:0}
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.bar h2{font:600 18px var(--f-display);margin:0 auto 0 0;letter-spacing:.01em}
+.bar label{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--muted)}
+.bar select{width:auto;padding:4px 6px;font-size:14px}
+.bar input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
+.bar .btn{padding:4px 10px;font-size:13.5px}
+.cv{position:relative;background:var(--plot-bg);height:clamp(300px,50vh,500px)}
+.cv canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.foot{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:space-between;align-items:center;padding:8px 14px;background:var(--plot-bg);color:var(--plot-ink);border-top:1px solid rgba(255,255,255,.07)}
+.readout{font-size:13.5px;min-height:1.4em;display:flex;flex-wrap:wrap;gap:2px 14px}
+.readout b{font-weight:600;color:#eef3f7}
+.legend{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--plot-dim)}
+.legend i{display:inline-block;width:12px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+details.fold>summary{list-style:none;cursor:pointer;user-select:none}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold:not([open])>summary{border-bottom:0}
+details.fold>summary:hover h2{color:var(--accent)}
+.chev{width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translate(-2px,-2px);transition:transform .15s;flex:none}
+details.fold:not([open]) .chev{transform:rotate(-45deg)}
+.cnt{font:600 13px var(--f-body);padding:2px 9px;border-radius:99px;background:var(--sunk);color:var(--muted)}
+.cnt:empty{display:none}
+.cnt.p{background:color-mix(in srgb,var(--pass) 14%,transparent);color:var(--pass)}
+.cnt.f{background:var(--fail);color:#fff}
+.perf{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.perf>div{min-width:0}
+.perf>div+div{border-left:1px solid var(--line-soft)}
+.perf h3{font:600 14px var(--f-body);color:var(--muted);margin:0;padding:10px 14px 0}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font:600 13px var(--f-body);color:var(--muted);text-align:left;padding:8px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:6px 14px;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+th.num,td.num{text-align:right}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:color-mix(in srgb,var(--sunk) 55%,transparent)}
+/* status: a pass is quiet, a fail is loud */
+.pill{display:inline-block;font:600 13px var(--f-body);border-radius:4px}
+.pill.p{color:var(--pass)}
+.pill.f{background:var(--fail);color:#fff;padding:1px 8px}
+.pill.i{color:var(--info);font-weight:400}
+tr.fail td{background:color-mix(in srgb,var(--fail) 8%,transparent)}
+tr.fail td:first-child{box-shadow:inset 3px 0 0 var(--fail)}
+.req-table td{padding:6px 10px;vertical-align:middle}
+.req-table th{padding:8px 10px}
+.req-table td:first-child{font-weight:600;padding-left:14px}
+.req-table input,.req-table select{padding:4px 6px;font-size:14px}
+.req-table input.lab{min-width:190px}
+.req-table select[data-k=type]{min-width:86px}
 .req-table .params{display:flex;flex-wrap:wrap;gap:4px 8px}
-.req-table .params label{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--muted);font-family:var(--f-mono)}
-.req-table .params input{width:68px;padding-right:6px}
+.req-table .params label{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)}
+.req-table .params input{width:70px}
 .req-table .params select{width:auto}
-.req-table td.meas{font-family:var(--f-mono);text-align:right;white-space:nowrap}
 .req-table .lim{display:flex;gap:4px;align-items:center}
 .req-table .lim select{width:52px}
-.req-table .lim input{width:72px;padding-right:6px}
-.req-table input.lab{min-width:170px}
-.req-table select[data-k=type]{min-width:84px}
-.req-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:12px 16px}
-.empty{padding:22px 16px;color:var(--muted);font-size:13px}
-.note{font-size:12px;color:var(--muted)}
-.foot{max-width:1500px;margin:28px auto 0;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
-.foot a{color:var(--muted)}
-.foot a:hover{color:var(--accent)}
-.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+.req-table .lim input{width:74px}
+.req-table .unit{font-size:13px;color:var(--muted)}
+.req-table td.meas{text-align:right;font-weight:600}
+.empty{padding:22px 14px;color:var(--muted);font-size:14px}
+.tools{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:12px 14px;border-top:1px solid var(--line-soft)}
+.json{border-top:1px solid var(--line-soft)}
+.json>summary{list-style:none;cursor:pointer;padding:10px 14px;font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:10px}
+.json>summary::-webkit-details-marker{display:none}
+.json>summary:hover{color:var(--accent)}
+.json:not([open]) .chev{transform:rotate(-45deg)}
+.json .jb{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+footer a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+footer a:hover{color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
 .toast.show{opacity:1}
+
+@media (max-width:1180px){
+  .summary{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .kv{grid-column:span 1}.kv.verdict{grid-column:span 2}
+}
+@media (max-width:900px){
+  .bench{grid-template-columns:minmax(0,1fr)}
+  aside{position:static;max-height:none;overflow:visible}
+  .rail-body{overflow:visible}
+}
+@media (max-width:640px){
+  body{font-size:16px}
+  input,select,textarea,.bar select{font-size:16px}
+  textarea{font-size:12px}
+  .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kv.verdict{grid-column:span 2}
+  .kv span{font-size:19px}.kv.verdict span{font-size:24px}
+  td,th{padding-inline:10px}
+  .perf>div+div{border-left:0;border-top:1px solid var(--line-soft)}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 
-<header class="top">
-  <h1 class="brand"><svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
-      <defs><clipPath id="logoClip"><rect width="48" height="48" rx="11"/></clipPath></defs>
+<div class="wrap">
+<div class="bench">
+<aside aria-label="Lamp, mounting and road settings">
+  <header>
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+      <defs><clipPath id="logoClip"><rect width="48" height="48" rx="9"/></clipPath></defs>
       <g clip-path="url(#logoClip)"><rect width="48" height="48" fill="#0c1016"/>
       <path d="M7 48V0M41 48V0" stroke="#3a4450" stroke-width="1"/><path d="M24 48V0" stroke="#c9a640" stroke-width="1" stroke-dasharray="3 3"/>
       <path d="M32 48C6 46 4 34 12 22L22 18L36 2C46 10 48 38 32 48Z" fill="#1d63b8"/>
@@ -168,162 +236,191 @@ main{display:flex;flex-direction:column;gap:16px;min-width:0}
       <path d="M32 48C19 45 18 38 21 34L26 32L33 26C37 31 37 41 32 48Z" fill="#e2d42e"/>
       <ellipse cx="30.5" cy="40" rx="6" ry="4.2" fill="#f28c1a"/>
       <ellipse cx="31" cy="39.6" rx="2.8" ry="2" fill="#e8402a"/></g>
-    </svg>Road Illuminate</h1>
-</header>
+    </svg>
+    <h1>Road Illuminate</h1>
+  </div>
+  </header>
+  <div class="rail-body">
 
-<div class="app">
-<aside class="rail">
+  <div class="lampcard">
+    <label class="drop" id="dropL" for="fileL">
+      <input type="file" id="fileL" accept=".ies,.IES,.txt">
+      <span class="drop-t">Upload IES file</span>
+      <span class="drop-s" id="nameL">or drop it here</span>
+    </label>
+    <div class="beam" id="beamL"></div>
+    <div class="meta" id="metaL"></div>
+    <div class="err" id="errL" hidden></div>
+  </div>
 
-  <details class="sec" open id="sec-photo">
-    <summary>Photometry <span class="hint" id="hint-photo"></span></summary>
-    <div class="sec-body">
-      <div class="drop" id="dropL">
-        <div class="row"><span class="lbl">Left lamp (or both lamps)</span>
-          <span class="btn filebtn">Load IES<input type="file" id="fileL" accept=".ies,.IES,.txt"></span></div>
-        <div class="fname" id="nameL">—</div>
-        <div class="beam" id="beamL"></div>
-        <div class="meta" id="metaL"></div>
-        <div class="err" id="errL" hidden></div>
-      </div>
-      <div class="drop" id="dropR">
-        <div class="row"><span class="lbl">Right lamp (optional)</span>
-          <span class="btns"><button class="btn ghost" id="clearR" type="button" hidden>Remove</button>
-          <span class="btn filebtn">Load IES<input type="file" id="fileR" accept=".ies,.IES,.txt"></span></span></div>
-        <div class="fname" id="nameR">Uses the left file</div>
-        <div class="beam" id="beamR"></div>
-        <div class="meta" id="metaR"></div>
-        <div class="err" id="errR" hidden></div>
-      </div>
-      <label class="check"><input type="checkbox" id="mirrorRight">Right lamp is the left file mirrored</label>
-      <label class="check"><input type="checkbox" id="mirrorAll">Mirror beam (convert RHT ↔ LHT)</label>
-      <div class="grid2">
-        <label class="field"><span>Angle system</span>
-          <select id="angleSys"><option value="azel">H then V (azel)</option><option value="elaz">V then H (elaz)</option></select></label>
-        <label class="field"><span>Lamps shown</span>
-          <select id="only"><option value="both">Both</option><option value="left">Left only</option><option value="right">Right only</option></select></label>
-        <label class="field"><span>Intensity factor</span><div class="inp"><input type="number" id="scale" step="0.05" min="0"><span class="u">×</span></div></label>
-      </div>
-    </div>
-  </details>
+  <div class="seg" role="group" aria-label="Illuminance method">
+    <button type="button" id="mVert" aria-pressed="true">Vertical planes on road</button>
+    <button type="button" id="mRoad" aria-pressed="false">Road surface</button>
+  </div>
+  <select id="method" hidden aria-hidden="true" tabindex="-1"><option value="hspr">Vertical planes on road</option><option value="road">Road surface</option></select>
 
+  <div class="secs">
   <details class="sec" open id="sec-mount">
-    <summary>Mounting &amp; orientation <span class="hint" id="hint-mount"></span></summary>
-    <div class="sec-body">
-      <div class="grid2">
-        <label class="field" style="grid-column:1/-1"><span>Illuminance method</span>
-          <select id="method"><option value="hspr">Vertical planes on road</option><option value="road">Road surface (horizontal plane)</option></select></label>
-        <label class="field"><span>Aim unit</span><select id="aimUnit"><option value="deg">Degrees</option><option value="pct">Percent (ECE)</option></select></label>
-        <label class="field"><span>Vertical aim <em>− down</em></span><div class="inp"><input type="number" id="aim" step="0.1"><span class="u" id="aimU">°</span></div></label>
-        <label class="field"><span>Mounting height</span><div class="inp"><input type="number" id="height" step="0.01" min="0.05"><span class="u">m</span></div></label>
-        <label class="field"><span>Lamp separation</span><div class="inp"><input type="number" id="sep" step="0.01" min="0"><span class="u">m</span></div></label>
-        <label class="field"><span>Toe <em>+ outward</em></span><div class="inp"><input type="number" id="toe" step="0.1"><span class="u">°</span></div></label>
-        <label class="field"><span>Pitch pivot x <em>− rear</em></span><div class="inp"><input type="number" id="pivot" step="0.1"><span class="u">m</span></div></label>
-        <label class="field"><span>Vehicle roll <em>+ left up</em></span><div class="inp"><input type="number" id="roll" step="0.1"><span class="u">°</span></div></label>
-        <label class="field"><span>Vehicle pitch <em>+ nose up</em></span><div class="inp"><input type="number" id="pitch" step="0.1"><span class="u">°</span></div></label>
-        <label class="field" id="evalHField"><span>Evaluation height</span><div class="inp"><input type="number" id="evalH" step="0.05" min="0"><span class="u">m</span></div></label>
-        <div class="field"><span>&nbsp;</span><a class="btn linkbox" id="hsprLink" href="https://jalibakthermk.github.io/HSPRevaluate/" target="_blank" rel="noopener">HSPRevaluate <span aria-hidden="true">↗</span></a></div>
+    <summary><span class="st">Mounting &amp; orientation</span><span class="sv" id="hint-mount"></span></summary>
+    <div class="sb">
+      <div class="row2">
+        <label class="f">Aim unit<select id="aimUnit"><option value="deg">Degrees</option><option value="pct">Percent (ECE)</option></select></label>
+        <label class="f">Vertical aim<div class="inp"><input type="number" id="aim" step="0.1"><span class="u" id="aimU">°</span></div><small>− down</small></label>
+      </div>
+      <div class="row2">
+        <label class="f">Mounting height<div class="inp"><input type="number" id="height" step="0.01" min="0.05"><span class="u">m</span></div></label>
+        <label class="f">Lamp separation<div class="inp"><input type="number" id="sep" step="0.01" min="0"><span class="u">m</span></div></label>
+      </div>
+      <div class="row2">
+        <label class="f">Toe<div class="inp"><input type="number" id="toe" step="0.1"><span class="u">°</span></div><small>+ outward</small></label>
+        <label class="f">Pitch pivot x<div class="inp"><input type="number" id="pivot" step="0.1"><span class="u">m</span></div><small>− behind the lamps</small></label>
+      </div>
+      <div class="row2">
+        <label class="f">Vehicle roll<div class="inp"><input type="number" id="roll" step="0.1"><span class="u">°</span></div><small>+ left side up</small></label>
+        <label class="f">Vehicle pitch<div class="inp"><input type="number" id="pitch" step="0.1"><span class="u">°</span></div><small>+ nose up</small></label>
+      </div>
+      <div class="row2">
+        <label class="f" id="evalHField">Evaluation height<div class="inp"><input type="number" id="evalH" step="0.05" min="0"><span class="u">m</span></div></label>
+        <div class="f">&nbsp;<a class="btn link" id="hsprLink" href="https://jalibakthermk.github.io/HSPRevaluate/" target="_blank" rel="noopener">HSPRevaluate <span aria-hidden="true">↗</span></a></div>
       </div>
       <div class="meta" id="geomInfo"></div>
     </div>
   </details>
 
-  <details class="sec" open id="sec-road">
-    <summary>Road &amp; lane markings <span class="hint" id="hint-road"></span></summary>
-    <div class="sec-body">
-      <div class="grid2">
-        <label class="field"><span>Traffic side</span><select id="side"><option value="RHT">Right-hand (RHT)</option><option value="LHT">Left-hand (LHT)</option></select></label>
-        <label class="field"><span>Lane width</span><div class="inp"><input type="number" id="laneW" step="0.05" min="2"><span class="u">m</span></div></label>
-        <label class="field"><span>Lanes, own direction</span><input type="number" id="ownN" step="1" min="1" max="5"></label>
-        <label class="field"><span>Lanes, oncoming</span><input type="number" id="oppN" step="1" min="0" max="5"></label>
-        <label class="field"><span>Vehicle lane <em>1 = kerb lane</em></span><input type="number" id="vehLane" step="1" min="1" max="5"></label>
-        <label class="field"><span>Offset in lane <em>+ left</em></span><div class="inp"><input type="number" id="laneOff" step="0.05"><span class="u">m</span></div></label>
-        <label class="field"><span>Centre line</span><select id="centre"><option value="dashed">Dashed</option><option value="solid">Solid</option><option value="double">Double solid</option></select></label>
-        <label class="field"><span>Centre line colour</span><select id="centreCol"><option value="white">White</option><option value="yellow">Yellow</option></select></label>
+  <details class="sec" id="sec-photo">
+    <summary><span class="st">Lamps &amp; photometry</span><span class="sv" id="hint-photo"></span></summary>
+    <div class="sb">
+      <div class="lampcard">
+        <label class="drop" id="dropR" for="fileR">
+          <input type="file" id="fileR" accept=".ies,.IES,.txt">
+          <span class="drop-t">Right lamp IES (optional)</span>
+          <span class="drop-s" id="nameR">Uses the left file</span>
+        </label>
+        <div class="btnrow"><button class="btn ghost" id="clearR" type="button" hidden>Remove right lamp file</button></div>
+        <div class="beam" id="beamR"></div>
+        <div class="meta" id="metaR"></div>
+        <div class="err" id="errR" hidden></div>
       </div>
-      <div class="btns"><button class="btn primary" type="button" id="genRoad">Rebuild markings from layout</button></div>
+      <label class="chk"><input type="checkbox" id="mirrorRight">Right lamp is the left file mirrored</label>
+      <label class="chk"><input type="checkbox" id="mirrorAll">Mirror beam (RHT ↔ LHT)</label>
+      <div class="row2">
+        <label class="f">Lamps shown<select id="only"><option value="both">Both</option><option value="left">Left only</option><option value="right">Right only</option></select></label>
+        <label class="f">Angle system<select id="angleSys"><option value="azel">H then V (azel)</option><option value="elaz">V then H (elaz)</option></select></label>
+      </div>
+      <div class="row2">
+        <label class="f">Intensity factor<div class="inp"><input type="number" id="scale" step="0.05" min="0"><span class="u">×</span></div></label>
+      </div>
+    </div>
+  </details>
+
+  <details class="sec" id="sec-road">
+    <summary><span class="st">Road &amp; lane markings</span><span class="sv" id="hint-road"></span></summary>
+    <div class="sb">
+      <div class="row2">
+        <label class="f">Traffic side<select id="side"><option value="RHT">Right-hand (RHT)</option><option value="LHT">Left-hand (LHT)</option></select></label>
+        <label class="f">Lane width<div class="inp"><input type="number" id="laneW" step="0.05" min="2"><span class="u">m</span></div></label>
+      </div>
+      <div class="row2">
+        <label class="f">Lanes, own direction<input type="number" id="ownN" step="1" min="1" max="5"></label>
+        <label class="f">Lanes, oncoming<input type="number" id="oppN" step="1" min="0" max="5"></label>
+      </div>
+      <div class="row2">
+        <label class="f">Vehicle lane<input type="number" id="vehLane" step="1" min="1" max="5"><small>1 = kerb lane</small></label>
+        <label class="f">Offset in lane<div class="inp"><input type="number" id="laneOff" step="0.05"><span class="u">m</span></div><small>+ left</small></label>
+      </div>
+      <div class="row2">
+        <label class="f">Centre line<select id="centre"><option value="dashed">Dashed</option><option value="solid">Solid</option><option value="double">Double solid</option></select></label>
+        <label class="f">Centre line colour<select id="centreCol"><option value="white">White</option><option value="yellow">Yellow</option></select></label>
+      </div>
+      <div class="btnrow"><button class="btn primary" type="button" id="genRoad">Rebuild markings</button><button class="btn" type="button" id="addMk">Add line</button></div>
       <div class="mk-list" id="mkBody" aria-label="Lane markings"></div>
-      <div class="btns"><button class="btn" type="button" id="addMk">Add line</button></div>
     </div>
   </details>
 
   <details class="sec" id="sec-plot">
-    <summary>Plot &amp; evaluation <span class="hint" id="hint-plot"></span></summary>
-    <div class="sec-body">
-      <div class="grid2">
-        <label class="field"><span>Distance ahead</span><div class="inp"><input type="number" id="xmax" step="5" min="10"><span class="u">m</span></div></label>
-        <label class="field"><span>Auto-fit lateral view</span><select id="yfit"><option value="road">To road edges</option><option value="manual">Manual</option></select></label>
-        <label class="field"><span>Right limit</span><div class="inp"><input type="number" id="ymin" step="0.5"><span class="u">m</span></div></label>
-        <label class="field"><span>Left limit</span><div class="inp"><input type="number" id="ymax" step="0.5"><span class="u">m</span></div></label>
+    <summary><span class="st">Plot &amp; evaluation</span><span class="sv" id="hint-plot"></span></summary>
+    <div class="sb">
+      <div class="row2">
+        <label class="f">Distance ahead<div class="inp"><input type="number" id="xmax" step="5" min="10"><span class="u">m</span></div></label>
+        <label class="f">Lateral view<select id="yfit"><option value="road">Fit to road</option><option value="manual">Manual</option></select></label>
       </div>
-      <label class="field"><span>Isolux lines</span><input type="text" id="levels" class="mono"></label>
-      <label class="field"><span>Range &amp; width thresholds</span><input type="text" id="thr" class="mono"></label>
-      <label class="field"><span>Width at distances</span><input type="text" id="widthX" class="mono"></label>
+      <div class="row2">
+        <label class="f">Right limit<div class="inp"><input type="number" id="ymin" step="0.5"><span class="u">m</span></div></label>
+        <label class="f">Left limit<div class="inp"><input type="number" id="ymax" step="0.5"><span class="u">m</span></div></label>
+      </div>
+      <label class="f">Isolux levels (lx)<input type="text" id="levels" class="mono"></label>
+      <label class="f">Range &amp; width thresholds (lx)<input type="text" id="thr" class="mono"></label>
+      <label class="f">Width at distances (m)<input type="text" id="widthX" class="mono"></label>
     </div>
   </details>
+  </div>
 
+  </div>
 </aside>
 
 <main>
-  <section class="card" aria-labelledby="plot-h">
-    <div class="card-h">
-      <h2 id="plot-h">Isolux, top view of the road</h2>
-      <div class="plot-tools">
-        <label class="check"><input type="checkbox" id="showContours" checked>Isolux lines</label>
-        <label class="check"><input type="checkbox" id="showReqs" checked>Checks on plot</label>
-        <button class="btn" type="button" id="copyCsv">Copy grid as CSV</button>
-      </div>
+  <section class="summary" id="summary" aria-label="Result summary"></section>
+
+  <section class="screen" aria-labelledby="plot-h">
+    <div class="bar">
+      <h2 id="plot-h">Road illumination</h2>
+      <label>Range <select id="xmaxSel"><option value="100">100 m</option><option value="150">150 m</option><option value="250">250 m</option><option value="400">400 m</option><option value="custom" hidden>Custom</option></select></label>
+      <label><input type="checkbox" id="showContours" checked> Isolux lines</label>
+      <label><input type="checkbox" id="showReqs" checked> Checks</label>
+      <button class="btn" type="button" id="copyCsv">Copy grid CSV</button>
     </div>
-    <div class="well">
-      <div class="readout" id="readout"></div>
-      <div class="plotwrap"><canvas id="plot" aria-label="Isolux plot of road illuminance"></canvas></div>
-      <div class="legend"><span>lx</span><div class="lbar"><div class="bar" id="legBar"></div><div class="ticks" id="legTicks"></div></div></div>
-    </div>
-    <div class="kpis" id="kpis"></div>
-    <div class="res-grid">
-      <div><h3>Range along lines</h3><div class="tblwrap"><table class="res-table" id="rangeTbl"></table></div></div>
-      <div><h3>Lit width</h3><div class="tblwrap"><table class="res-table" id="widthTbl"></table></div></div>
-    </div>
+    <div class="cv"><canvas id="plot" aria-label="Bird's-eye isolux plot of the road"></canvas></div>
+    <div class="foot"><div class="readout" id="readout"></div><div class="legend" id="legend"></div></div>
   </section>
 
-  <section class="card" aria-labelledby="req-h">
-    <div class="card-h">
-      <h2 id="req-h">Customer requirement checks</h2>
-      <div class="status" id="reqSummary"></div>
+  <details class="screen fold" id="foldPerf" open>
+    <summary class="bar"><span class="chev" aria-hidden="true"></span><h2>Road performance</h2></summary>
+    <div class="perf">
+      <div><h3>Range along lines</h3><div class="tbl"><table id="rangeTbl"></table></div></div>
+      <div><h3>Lit width</h3><div class="tbl"><table id="widthTbl"></table></div></div>
     </div>
-    <div class="tblwrap">
+  </details>
+
+  <details class="screen fold" id="foldReq" open>
+    <summary class="bar"><span class="chev" aria-hidden="true"></span><h2>Customer checks</h2><span id="reqSummary"></span><span class="cnt" id="reqCount"></span></summary>
+    <div class="tbl">
       <table class="req-table">
-        <thead><tr><th>#</th><th>Requirement</th><th>Type</th><th>Where</th><th>Limit</th><th style="text-align:right">Measured</th><th>Result</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th>Requirement</th><th>Type</th><th>Where</th><th>Limit</th><th class="num">Measured</th><th>Result</th><th></th></tr></thead>
         <tbody id="reqBody"></tbody>
       </table>
     </div>
     <div class="empty" id="reqEmpty" hidden>No checks yet.</div>
-    <div class="req-foot">
-      <div class="btns">
+    <div class="tools">
+      <div class="btnrow">
         <button class="btn" type="button" data-add="point">+ Point</button>
         <button class="btn" type="button" data-add="range">+ Range</button>
         <button class="btn" type="button" data-add="width">+ Width</button>
         <button class="btn" type="button" data-add="zone">+ Zone</button>
       </div>
-      <div class="btns">
+      <div class="btnrow">
         <span class="btn filebtn">Load JSON<input type="file" id="reqFile" accept=".json,application/json"></span>
         <button class="btn" type="button" id="copyTable">Copy as table</button>
         <button class="btn" type="button" id="dlCsv">Download CSV</button>
-        <button class="btn" type="button" id="loadExample">Load example set</button>
+        <button class="btn" type="button" id="loadExample">Example set</button>
         <button class="btn" type="button" id="clearReqs">Clear all</button>
       </div>
     </div>
-    <details class="sec" style="border:0;border-top:1px solid var(--line);border-radius:0 0 var(--r) var(--r)">
-      <summary>Import / export requirement set (JSON)</summary>
-      <div class="sec-body">
+    <details class="json">
+      <summary><span class="chev" aria-hidden="true"></span>Requirement set as JSON</summary>
+      <div class="jb">
         <textarea id="reqJson" spellcheck="false" aria-label="Requirement set JSON"></textarea>
-        <div class="btns"><button class="btn" type="button" id="copyJson">Copy current set</button><button class="btn primary" type="button" id="applyJson">Replace checks with this JSON</button></div>
+        <div class="btnrow"><button class="btn" type="button" id="copyJson">Copy current set</button><button class="btn primary" type="button" id="applyJson">Replace checks with this JSON</button></div>
         <div class="err" id="jsonErr" hidden></div>
       </div>
     </details>
-  </section>
+  </details>
 </main>
 </div>
-<footer class="foot">© 2026 Jalib Akther · <a href="https://github.com/jalibakthermk/Road-illuminate/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a></footer>
+
+<footer>
+  <span>© 2026 Jalib Akther · Released under the <a href="https://github.com/jalibakthermk/Road-illuminate/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a></span>
+</footer>
+</div>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -581,7 +678,7 @@ function evalReq(r){
   else if(r.type==="range"){const d=rangeOn(+r.y,+r.thr); v=d===null?0:d; unit="m"; txt=d===null?"not reached":fmt(d,1)+" m";}
   else if(r.type==="width"){const w=widthAt(+r.x,+r.thr); v=w?w[1]-w[0]:0; unit="m"; txt=w?fmt(v,2)+" m":"none";}
   else if(r.type==="zone"){v=zoneStat(r); txt=`${r.stat||"max"} ${fmt(v,2)} lx`;}
-  const lim=+r.limit, ok=Number.isFinite(lim)?(r.op==="<="?v<=lim:v>=lim):null;
+  const lim=(r.limit===null||r.limit===undefined||r.limit==="")?NaN:+r.limit, ok=Number.isFinite(lim)?(r.op==="<="?v<=lim:v>=lim):null;
   return {v,txt,ok,unit};
 }
 
@@ -589,17 +686,19 @@ function evalReq(r){
 const cv=$("#plot"), ctx=cv.getContext("2d");
 const base=document.createElement("canvas"), bctx=base.getContext("2d");
 let G=null, VIEW=null, hover=null;
-const STOPS=[[0,[18,24,48]],[.14,[30,52,150]],[.3,[22,112,205]],[.45,[18,170,175]],[.6,[72,192,84]],[.72,[222,214,44]],[.85,[246,142,26]],[.95,[232,54,32]],[1,[255,236,226]]];
+const STOPS=[[22,46,84],[28,92,140],[23,148,152],[78,184,104],[214,208,70],[242,154,52],[226,78,58],[255,226,214]];
 function cmap(t){
-  if(t<=0) return STOPS[0][1]; if(t>=1) return STOPS[STOPS.length-1][1];
-  for(let i=1;i<STOPS.length;i++) if(t<=STOPS[i][0]){const [a,ca]=STOPS[i-1],[b,cb]=STOPS[i],u=(t-a)/(b-a); return ca.map((c,k)=>Math.round(c+(cb[k]-c)*u));}
+  t=Math.min(1,Math.max(0,t))*(STOPS.length-1); const i=Math.min(STOPS.length-2,Math.floor(t)), f=t-i, a=STOPS[i], b=STOPS[i+1];
+  return [0,1,2].map(k=>Math.round(a[k]+(b[k]-a[k])*f));
 }
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const rgb=(c,a=1)=>`rgba(${c[0]},${c[1]},${c[2]},${a})`;
 const parseList=s=>String(s).split(/[,;\s]+/).map(Number).filter(x=>Number.isFinite(x)&&x>0).sort((a,b)=>a-b);
 function niceStep(range,target){const r=range/target, p=Math.pow(10,Math.floor(Math.log10(r))), m=r/p; return (m<1.5?1:m<3?2:m<7?5:10)*p;}
 
 function computeGrid(){
   const W=cv.clientWidth, Hh=cv.clientHeight;
-  const m={l:46,r:12,t:10,b:30};
+  const m={l:40,r:12,t:12,b:26};
   const pw=Math.max(50,W-m.l-m.r), ph=Math.max(50,Hh-m.t-m.b);
   const gw=Math.min(560,Math.max(80,Math.round(pw/2))), gh=Math.min(300,Math.max(50,Math.round(ph/2)));
   const x0=0,x1=Math.max(10,+S.xmax), y0=Math.min(S.ymin,S.ymax-1), y1=Math.max(S.ymax,S.ymin+1);
@@ -626,95 +725,81 @@ function contourSegs(level){
 function drawBase(){
   const dpr=window.devicePixelRatio||1;
   base.width=Math.round(VIEW.W*dpr); base.height=Math.round(VIEW.H*dpr);
-  const c=bctx; c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,VIEW.W,VIEW.H);
-  const levels=parseList(S.levels);
-  const top=levels[levels.length-1]||10, lo=Math.max(0.02,(levels[0]||0.5)/4), hi=Math.max(lo*10,Math.min(G.emax,top*1.5));
-  const llo=Math.log10(lo), lhi=Math.log10(hi);
-  // field image
+  const c=bctx; c.setTransform(dpr,0,0,dpr,0,0);
+  c.fillStyle=css("--plot-bg"); c.fillRect(0,0,VIEW.W,VIEW.H);
+  const levels=parseList(S.levels), colors=levels.map((_,i)=>cmap(levels.length>1?i/(levels.length-1):1));
+  const fb=css("--f-body");
+  // banded field: each grid cell takes the colour of the highest level it reaches
   const img=new ImageData(G.gw,G.gh), d=img.data;
-  for(let k=0;k<G.E.length;k++){const e=G.E[k]; let col; if(e<lo){col=[16,19,23];} else col=cmap((Math.log10(e)-llo)/(lhi-llo)); d[4*k]=col[0];d[4*k+1]=col[1];d[4*k+2]=col[2];d[4*k+3]=255;}
+  for(let k=0;k<G.E.length;k++){const e=G.E[k]; let bnd=-1; for(let l=0;l<levels.length;l++){if(e>=levels[l]) bnd=l; else break;}
+    if(bnd>=0){const col=colors[bnd]; d[4*k]=col[0]; d[4*k+1]=col[1]; d[4*k+2]=col[2]; d[4*k+3]=215;}}
   const tmp=document.createElement("canvas"); tmp.width=G.gw; tmp.height=G.gh; tmp.getContext("2d").putImageData(img,0,0);
   c.imageSmoothingEnabled=true; c.drawImage(tmp,VIEW.m.l,VIEW.m.t,VIEW.pw,VIEW.ph);
-  // grid
   c.save(); c.beginPath(); c.rect(VIEW.m.l,VIEW.m.t,VIEW.pw,VIEW.ph); c.clip();
   const sx=niceStep(VIEW.x1-VIEW.x0,8), sy=niceStep(VIEW.y1-VIEW.y0,6);
-  c.strokeStyle="rgba(255,255,255,0.07)"; c.lineWidth=1;
-  for(let x=Math.ceil(VIEW.x0/sx)*sx;x<=VIEW.x1;x+=sx){c.beginPath();c.moveTo(X(x)+.5,VIEW.m.t);c.lineTo(X(x)+.5,VIEW.m.t+VIEW.ph);c.stroke();}
-  for(let y=Math.ceil(VIEW.y0/sy)*sy;y<=VIEW.y1;y+=sy){c.beginPath();c.moveTo(VIEW.m.l,Y(y)+.5);c.lineTo(VIEW.m.l+VIEW.pw,Y(y)+.5);c.stroke();}
-  // centreline of vehicle
-  c.setLineDash([2,4]); c.strokeStyle="rgba(255,255,255,0.28)"; c.beginPath(); c.moveTo(VIEW.m.l,Y(0));c.lineTo(VIEW.m.l+VIEW.pw,Y(0)); c.stroke(); c.setLineDash([]);
+  c.lineWidth=1;
+  for(let x=Math.ceil(VIEW.x0/sx)*sx;x<=VIEW.x1;x+=sx){c.strokeStyle=css("--plot-grid");c.beginPath();c.moveTo(X(x)+.5,VIEW.m.t);c.lineTo(X(x)+.5,VIEW.m.t+VIEW.ph);c.stroke();}
+  for(let y=Math.ceil(VIEW.y0/sy)*sy;y<=VIEW.y1+1e-9;y+=sy){c.strokeStyle=Math.abs(y)<1e-9?css("--plot-axis"):css("--plot-grid");c.beginPath();c.moveTo(VIEW.m.l,Y(y)+.5);c.lineTo(VIEW.m.l+VIEW.pw,Y(y)+.5);c.stroke();}
+  // isolux lines in their band colour
+  if(S.showContours){
+    const gx=i=>VIEW.m.l+(i+0.5)/G.gw*VIEW.pw, gy=j=>VIEW.m.t+(j+0.5)/G.gh*VIEW.ph;
+    levels.forEach((lv,l)=>{
+      if(lv>G.emax) return;
+      const segs=contourSegs(lv); if(!segs.length) return;
+      c.strokeStyle=rgb(colors[l].map(v=>Math.min(255,v+50)),0.95); c.lineWidth=1; c.beginPath();
+      for(const [a,b] of segs){c.moveTo(gx(a[0]),gy(a[1]));c.lineTo(gx(b[0]),gy(b[1]));}
+      c.stroke();
+    });
+  }
   // lane markings
   const pxPerM=VIEW.pw/(VIEW.x1-VIEW.x0);
   for(const mk of S.markings||[]){
     if(!Number.isFinite(+mk.y)||mk.y<VIEW.y0-1||mk.y>VIEW.y1+1) continue;
-    const col=mk.color==="yellow"?"rgba(250,204,60,0.95)":"rgba(245,247,250,0.92)";
-    c.strokeStyle=col; c.lineWidth=2;
+    const col=mk.color==="yellow"?"rgba(250,204,60,0.95)":"rgba(255,255,255,0.75)";
+    c.strokeStyle=col; c.lineWidth=1.6;
     const yy=Y(+mk.y);
     if(mk.style==="dashed") c.setLineDash([Math.max(3,3*pxPerM),Math.max(4,9*pxPerM)]); else c.setLineDash([]);
     const offs=mk.style==="double"?[-2,2]:[0];
     for(const o of offs){c.beginPath();c.moveTo(VIEW.m.l,yy+o);c.lineTo(VIEW.m.l+VIEW.pw,yy+o);c.stroke();}
     c.setLineDash([]);
-    c.font="500 10.5px "+getComputedStyle(document.body).getPropertyValue("--f-ui"); c.fillStyle=col; c.textBaseline="bottom";
-    c.lineWidth=3; c.strokeStyle="rgba(8,10,13,0.85)"; c.strokeText(mk.name,VIEW.m.l+6,yy-4); c.fillText(mk.name,VIEW.m.l+6,yy-4);
+    c.font="600 10.5px "+fb; c.fillStyle=col; c.textBaseline="bottom"; c.textAlign="left";
+    c.lineWidth=3; c.strokeStyle="rgba(13,21,29,0.85)"; c.strokeText(mk.name,VIEW.m.l+6,yy-4); c.fillText(mk.name,VIEW.m.l+6,yy-4);
   }
-  // contours
-  if(S.showContours){
-    const gx=i=>VIEW.m.l+(i+0.5)/G.gw*VIEW.pw, gy=j=>VIEW.m.t+(j+0.5)/G.gh*VIEW.ph;
-    c.font="500 10.5px "+getComputedStyle(document.body).getPropertyValue("--f-mono");
-    const placed=[], labels=[];
-    for(const lv of levels.slice().reverse()){
-      if(lv>G.emax) continue;
-      const segs=contourSegs(lv); if(!segs.length) continue;
-      c.strokeStyle="rgba(255,255,255,0.85)"; c.lineWidth=1.1; c.beginPath();
-      for(const [a,b] of segs){c.moveTo(gx(a[0]),gy(a[1]));c.lineTo(gx(b[0]),gy(b[1]));}
-      c.stroke();
-      const s=lv+" lx", w=c.measureText(s).width+4;
-      const cand=segs.map(sg=>sg[0]).sort((p,q)=>q[0]-p[0]);
-      for(let n=0;n<cand.length;n+=Math.max(1,Math.floor(cand.length/120))){
-        const tx=gx(cand[n][0]), ty=gy(cand[n][1]), lx=Math.min(tx+3,VIEW.m.l+VIEW.pw-w-2);
-        const box=[lx-2,ty-8,w,16];
-        if(ty<VIEW.m.t+8||ty>VIEW.m.t+VIEW.ph-8) continue;
-        if(placed.some(o=>box[0]<o[0]+o[2]&&o[0]<box[0]+box[2]&&box[1]<o[1]+o[3]&&o[1]<box[1]+box[3])) continue;
-        placed.push(box); labels.push([s,lx,ty,box]); break;
-      }
-    }
-    c.textBaseline="middle";
-    for(const [s,lx,ty,box] of labels){c.fillStyle="rgba(8,10,13,0.78)"; c.fillRect(box[0],ty-7,box[2],14); c.fillStyle="#fff"; c.fillText(s,lx,ty);}
-  }
-  // requirement overlays
+  // customer checks: pass green, fail red, no limit grey
   if(S.showReqs){
-    c.font="600 10.5px "+getComputedStyle(document.body).getPropertyValue("--f-mono"); c.textBaseline="middle";
+    const pass=css("--pass"), fail=css("--fail");
+    c.font="600 10.5px "+fb; c.textBaseline="middle"; c.textAlign="left";
     S.reqs.forEach((r,idx)=>{
-      const res=lastEval[r.id], col=res&&res.ok===false?"#ff8a7a":res&&res.ok?"#6ee7a8":"#f0a33a";
+      const res=lastEval[r.id], col=res&&res.ok===false?fail:res&&res.ok?pass:"#9fb0bd";
       c.strokeStyle=col; c.fillStyle=col; c.lineWidth=1.6;
-      const tag=String(idx+1);
-      if(r.type==="point"){const px=X(+r.x),py=Y(+r.y); c.beginPath();c.arc(px,py,5,0,7);c.stroke(); c.fillText(tag,px+8,py-8);}
-      else if(r.type==="zone"){const a=X(Math.min(r.x1,r.x2)),b=X(Math.max(r.x1,r.x2)),t=Y(Math.max(r.y1,r.y2)),bt=Y(Math.min(r.y1,r.y2)); c.setLineDash([5,4]); c.strokeRect(a,t,b-a,bt-t); c.setLineDash([]); c.fillText(tag,a+5,t+9);}
-      else if(r.type==="range"){const py=Y(+r.y); const d=res&&res.v; if(d>0){const px=X(d); c.beginPath();c.moveTo(px,py-7);c.lineTo(px,py+7);c.stroke(); c.beginPath();c.moveTo(px-5,py);c.lineTo(px,py);c.stroke();} const lp=X(+r.limit); c.setLineDash([2,3]); c.beginPath();c.moveTo(lp,py-9);c.lineTo(lp,py+9);c.stroke(); c.setLineDash([]); c.fillText(tag,lp+4,py-10);}
-      else if(r.type==="width"){const px=X(+r.x); c.setLineDash([2,3]); c.beginPath();c.moveTo(px,VIEW.m.t);c.lineTo(px,VIEW.m.t+VIEW.ph);c.stroke(); c.setLineDash([]); c.fillText(tag,px+4,VIEW.m.t+10);}
+      const tag=String(idx+1); let lx,ly;
+      if(r.type==="point"){const px=X(+r.x),py=Y(+r.y); c.beginPath();c.rect(px-3.5,py-3.5,7,7);c.fill(); c.strokeStyle="#0d151d";c.lineWidth=1;c.stroke(); lx=px+6; ly=py-7;}
+      else if(r.type==="zone"){const a=X(Math.min(r.x1,r.x2)),b=X(Math.max(r.x1,r.x2)),t=Y(Math.max(r.y1,r.y2)),bt=Y(Math.min(r.y1,r.y2)); c.setLineDash([5,3]); c.strokeRect(a,t,b-a,bt-t); c.setLineDash([]); lx=a+3; ly=t+9;}
+      else if(r.type==="range"){const py=Y(+r.y), d=res&&res.v;
+        c.setLineDash([3,3]); c.beginPath(); c.moveTo(X(0),py); c.lineTo(X(Math.min(d||0,VIEW.x1)),py); c.stroke(); c.setLineDash([]);
+        if(Number.isFinite(+r.limit)&&r.limit!==null&&r.limit!==""){c.beginPath(); c.moveTo(X(+r.limit),py-6); c.lineTo(X(+r.limit),py+6); c.stroke();}
+        if(d>0){c.beginPath(); c.arc(X(Math.min(d,VIEW.x1)),py,3.5,0,7); c.fill();}
+        lx=X(Math.min(d||+r.limit||0,VIEW.x1))+6; ly=py-8;}
+      else if(r.type==="width"){const px=X(+r.x), w=widthAt(+r.x,+r.thr,Math.max(30,Math.abs(S.ymin),Math.abs(S.ymax)));
+        if(w){c.beginPath(); c.moveTo(px,Y(w[0])); c.lineTo(px,Y(w[1])); c.stroke(); [0,1].forEach(k=>{c.beginPath(); c.moveTo(px-5,Y(w[k])); c.lineTo(px+5,Y(w[k])); c.stroke();});}
+        lx=px+6; ly=(w?Y(w[1]):VIEW.m.t+10)-8;}
+      c.fillStyle="#e6eef4"; c.fillText(tag,lx,ly);
     });
   }
   c.restore();
   // lamps
-  for(const L of LAMPS){const px=X(Math.max(VIEW.x0,L.px)),py=Y(L.py); c.fillStyle="#f0a33a"; c.beginPath(); c.moveTo(px,py-5);c.lineTo(px+9,py);c.lineTo(px,py+5);c.closePath();c.fill();}
-  // frame + axes
-  c.strokeStyle="rgba(255,255,255,0.18)"; c.lineWidth=1; c.strokeRect(VIEW.m.l+.5,VIEW.m.t+.5,VIEW.pw-1,VIEW.ph-1);
-  c.fillStyle="#a9b4bf"; c.font="400 11px "+getComputedStyle(document.body).getPropertyValue("--f-mono");
-  c.textAlign="center"; c.textBaseline="top";
-  for(let x=Math.ceil(VIEW.x0/sx)*sx;x<=VIEW.x1+1e-9;x+=sx) c.fillText(String(+x.toFixed(2)),X(x),VIEW.m.t+VIEW.ph+5);
-  c.textAlign="right"; c.textBaseline="middle";
-  for(let y=Math.ceil(VIEW.y0/sy)*sy;y<=VIEW.y1+1e-9;y+=sy) c.fillText(String(+y.toFixed(2)).replace("-","−"),VIEW.m.l-6,Y(y));
-  c.textAlign="right"; c.textBaseline="bottom"; c.fillText("x ahead [m]",VIEW.m.l+VIEW.pw,VIEW.H-1);
-  c.save(); c.translate(11,VIEW.m.t+VIEW.ph/2); c.rotate(-Math.PI/2); c.textAlign="center"; c.textBaseline="middle"; c.fillText("y [m]  left +",0,0); c.restore();
+  for(const L of LAMPS){const px=X(Math.max(VIEW.x0,L.px)),py=Y(L.py); c.fillStyle="#e6eef4"; c.beginPath(); c.moveTo(px,py-4.5);c.lineTo(px+8,py);c.lineTo(px,py+4.5);c.closePath();c.fill();}
+  // axes: distance ahead below, lateral as L / R
+  c.fillStyle=css("--plot-dim"); c.font="11px "+fb; c.textAlign="center"; c.textBaseline="alphabetic";
+  const xs=[]; for(let x=Math.ceil(VIEW.x0/sx)*sx;x<=VIEW.x1+1e-9;x+=sx) xs.push(x);
+  xs.forEach((x,i)=>c.fillText(String(+x.toFixed(2))+(i===xs.length-1?" m":""),X(x),VIEW.H-8));
+  c.textAlign="right";
+  for(let y=Math.ceil(VIEW.y0/sy)*sy;y<=VIEW.y1+1e-9;y+=sy){const v=+y.toFixed(2); c.fillText(v===0?"0":Math.abs(v)+(v>0?"L":"R"),VIEW.m.l-6,Y(y)+4);}
   c.textAlign="left";
-  drawLegend(lo,hi,levels);
+  drawLegend(levels,colors);
 }
-function drawLegend(lo,hi,levels){
-  const llo=Math.log10(lo),lhi=Math.log10(hi);
-  $("#legBar").style.background="linear-gradient(90deg,"+STOPS.map(([t,c])=>`rgb(${c.join(",")}) ${t*100}%`).join(",")+")";
-  const ticks=levels.filter(l=>l>=lo&&l<=hi).map(l=>`<span style="left:${((Math.log10(l)-llo)/(lhi-llo)*100).toFixed(2)}%">${l}</span>`);
-  ticks.push(`<span style="left:100%;transform:translateX(-100%)">${G.emax>hi?"≥ ":""}${fmt(hi,hi<10?1:0)}</span>`);
-  $("#legTicks").innerHTML=ticks.join("");
+function drawLegend(levels,colors){
+  $("#legend").innerHTML=levels.map((L,i)=>`<span><i style="background:${rgb(colors[i])}"></i>${L}</span>`).join("")+"<span>lx</span>";
 }
 function drawFrame(){
   const dpr=window.devicePixelRatio||1;
@@ -722,7 +807,7 @@ function drawFrame(){
   ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height); ctx.drawImage(base,0,0);
   if(hover){
     ctx.setTransform(dpr,0,0,dpr,0,0);
-    ctx.strokeStyle="rgba(255,255,255,0.6)"; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.strokeStyle="rgba(230,238,244,0.55)"; ctx.lineWidth=1; ctx.setLineDash([3,3]);
     ctx.beginPath(); ctx.moveTo(hover.px,VIEW.m.t); ctx.lineTo(hover.px,VIEW.m.t+VIEW.ph); ctx.moveTo(VIEW.m.l,hover.py); ctx.lineTo(VIEW.m.l+VIEW.pw,hover.py); ctx.stroke(); ctx.setLineDash([]);
   }
 }
@@ -732,8 +817,9 @@ function onMove(ev){
   if(px<VIEW.m.l||px>VIEW.m.l+VIEW.pw||py<VIEW.m.t||py>VIEW.m.t+VIEW.ph){hover=null; drawFrame(); return;}
   const x=VIEW.x0+(px-VIEW.m.l)/VIEW.pw*(VIEW.x1-VIEW.x0), y=VIEW.y1-(py-VIEW.m.t)/VIEW.ph*(VIEW.y1-VIEW.y0);
   hover={px,py}; const e=Eat(x,y);
-  const hv=LAMPS.map(L=>{const [h,v]=lampHV(L,x,y); return `${L.name} H ${fmt(h,2)}° V ${fmt(v,2)}°`;}).join("  ·  ");
-  $("#readout").innerHTML=`<span>x <b>${fmt(x,1)} m</b></span><span>y <b>${fmt(y,2)} m</b></span><span>E <b>${fmt(e,e<10?2:1)} lx</b></span><span>${hv}</span>`;
+  const hv=LAMPS.map(L=>{const [h,v]=lampHV(L,x,y); return `<span>${L.name} H ${fmt(h,2)}° V ${fmt(v,2)}°</span>`;}).join("");
+  const side=Math.abs(y)<0.005?"axis":`${fmt(Math.abs(y),2)} m ${y>0?"L":"R"}`;
+  $("#readout").innerHTML=`<span><b>${fmt(e,e<10?2:1)} lx</b></span><span>${fmt(x,1)} m, ${side}</span>${hv}`;
   drawFrame();
 }
 cv.addEventListener("pointermove",onMove);
@@ -747,16 +833,28 @@ function renderResults(){
   const lines=[{name:"Vehicle axis",y:0}].concat((S.markings||[]).map(m=>({name:m.name,y:+m.y})));
   // range: sample each line once, reuse for all thresholds
   const rows=lines.map(L=>{const last=thr.map(()=>null); for(let x=0.1;x<=400;x+=0.1){const e=Eat(x,L.y); thr.forEach((t,k)=>{if(meets(e,t)) last[k]=x;});} return {L,last};});
-  $("#rangeTbl").innerHTML=`<thead><tr><th>Line</th><th class="num">y [m]</th>${thr.map(t=>`<th class="num">${t} lx</th>`).join("")}</tr></thead><tbody>`+
-    rows.map(({L,last})=>`<tr><td>${esc(L.name)}</td><td class="num mono">${fmt(L.y,2)}</td>${last.map(d=>`<td class="num mono">${d===null?"—":fmt(d,1)+" m"}</td>`).join("")}</tr>`).join("")+"</tbody>";
+  $("#rangeTbl").innerHTML=`<thead><tr><th>Line</th><th class="num">Position</th>${thr.map(t=>`<th class="num">${t} lx</th>`).join("")}</tr></thead><tbody>`+
+    rows.map(({L,last})=>`<tr><td>${esc(L.name)}</td><td class="num">${Math.abs(L.y)<0.005?"axis":fmt(Math.abs(L.y),2)+" m "+(L.y>0?"L":"R")}</td>${last.map(d=>`<td class="num">${d===null?"—":fmt(d,1)+" m"}</td>`).join("")}</tr>`).join("")+"</tbody>";
   const lim=Math.max(30,Math.abs(S.ymin),Math.abs(S.ymax));
-  $("#widthTbl").innerHTML=`<thead><tr><th class="num">x [m]</th>${thr.map(t=>`<th class="num">${t} lx</th>`).join("")}</tr></thead><tbody>`+
-    wx.map(x=>`<tr><td class="num mono">${x}</td>${thr.map(t=>{const w=widthAt(x,t,lim); return `<td class="num mono" title="${w?`right ${fmt(w[0],2)} m to left ${fmt(w[1],2)} m`:""}">${w?fmt(w[1]-w[0],1)+" m":"—"}</td>`;}).join("")}</tr>`).join("")+"</tbody>";
+  $("#widthTbl").innerHTML=`<thead><tr><th>Distance</th>${thr.map(t=>`<th class="num">${t} lx</th>`).join("")}</tr></thead><tbody>`+
+    wx.map(x=>`<tr><td>${x} m</td>${thr.map(t=>{const w=widthAt(x,t,lim); return `<td class="num" title="${w?`${fmt(Math.abs(w[0]),2)} m ${w[0]>0?"L":"R"} to ${fmt(Math.abs(w[1]),2)} m ${w[1]>0?"L":"R"}`:""}">${w?fmt(w[1]-w[0],1)+" m":"—"}</td>`;}).join("")}</tr>`).join("")+"</tbody>";
   const hits=LAMPS.map(L=>{const el=Math.asin(L.f[2])/D2R+L.aimV; return {L,el,d:el<0?L.pz/Math.tan(-el*D2R):null};});
-  $("#kpis").innerHTML=[
-    ["E max on view",`${fmt(G.emax,1)} lx`],["at",`${fmt(G.ex,1)} m, ${fmt(G.ey,2)} m`],
-    ...hits.map(h=>[`${h.L.name} axis meets road`,h.d===null?"never":`${fmt(h.d,1)} m`])
-  ].map(([a,b])=>`<div class="kpi"><span>${a}</span><b>${b}</b></div>`).join("");
+  const kv=(k,v,e,cls)=>`<div class="kv ${cls||""}"><b>${k}</b><span>${v}</span>${e?`<em>${e}</em>`:""}</div>`;
+  const nCh=S.reqs.filter(r=>lastEval[r.id]&&lastEval[r.id].ok!==null).length, nFail=S.reqs.filter(r=>lastEval[r.id]&&lastEval[r.id].ok===false).length;
+  const b=rawL.beam, side=y=>Math.abs(y)<0.005?"axis":`${fmt(Math.abs(y),1)} m ${y>0?"L":"R"}`;
+  const axis=rows[0]?rows[0].last:[]; const t0=thr[0], t1=thr[thr.length-1];
+  const wAt=wx.includes(20)?20:wx[0], wv=wAt!=null&&t0!=null?widthAt(wAt,t0,lim):null;
+  const sideHits=hits.map(h=>h.d===null?"—":fmt(h.d,0)).join(" / ");
+  $("#summary").innerHTML=
+    kv("Customer checks",!S.reqs.length?"No checks":!nCh?"No limits set":nFail?`${nFail} of ${nCh} fail`:`Pass ${nCh}/${nCh}`,
+       (S.reqsExample&&S.reqs.length?"example set, ":"")+(S.method==="hspr"?`vertical planes on road, ${S.evalH} m`:"road surface"),
+       "verdict "+(!nCh?"":nFail?"bad":"ok"))+
+    kv("Beam",b?esc(b.type+(b.side?" · "+b.side:"")):"—",esc(rawL.sample?"sample beam":rawL.name))+
+    kv("E max",`${fmt(G.emax,G.emax<10?2:0)} lx`,`${fmt(G.ex,1)} m, ${side(G.ey)}`)+
+    kv(`Reach ${t0??"–"} / ${t1??"–"} lx`,`${axis[0]==null?"—":fmt(axis[0],0)} / ${axis[axis.length-1]==null?"—":fmt(axis[axis.length-1],0)} m`,"along the vehicle axis")+
+    kv("Axis on road",`${sideHits} m`,LAMPS.map(h=>h.name).join(" / ")+" lamp")+
+    kv(`Width at ${wAt??"–"} m`,wv?`${fmt(wv[1]-wv[0],1)} m`:"—",t0!=null?`at ${t0} lx`:"")+
+    kv("Mounting",`${S.height} m`,`aim ${S.aim}${S.aimUnit==="pct"?" %":"°"}, pitch ${S.pitch}°`);
   $("#geomInfo").innerHTML=hits.map(h=>`${h.L.name}: pos (${fmt(h.L.px,3)}, ${fmt(h.L.py,3)}, ${fmt(h.L.pz,3)}) m · axis ${fmt(h.el,3)}°`).join("<br>");
 }
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -769,12 +867,13 @@ function renderReqs(){
   if(sig!==reqSig){reqSig=sig; buildReqTable();}
   S.reqs.forEach(r=>{const e=lastEval[r.id], row=document.querySelector(`#reqBody tr[data-id="${r.id}"]`); if(!row)return;
     row.querySelector(".meas").textContent=e.txt;
-    row.querySelector(".res").innerHTML=e.ok===null?'<span class="chip">no limit</span>':e.ok?'<span class="chip pass">Pass</span>':'<span class="chip fail">Fail</span>';
+    row.querySelector(".res").innerHTML=e.ok===null?'<span class="pill i">no limit</span>':e.ok?'<span class="pill p">Pass</span>':'<span class="pill f">Fail</span>';
+    row.classList.toggle("fail",e.ok===false);
     row.querySelector(".unit").textContent=r.type==="range"||r.type==="width"?"m":"lx";});
   $("#reqEmpty").hidden=S.reqs.length>0;
-  const sum=[]; if(S.reqsExample&&S.reqs.length) sum.push('<span class="chip ex">Example checks</span>');
-  if(S.reqs.length) sum.push(`<span class="chip pass"><b>${pass}</b> pass</span>`,`<span class="chip ${fail?"fail":""}"><b>${fail}</b> fail</span>`);
-  $("#reqSummary").innerHTML=sum.join("");
+  $("#reqSummary").innerHTML=S.reqsExample&&S.reqs.length?'<span class="chip ex">Example set</span>':"";
+  const n=pass+fail, cnt=$("#reqCount");
+  cnt.textContent=!n?"":fail?`${fail} of ${n} fail`:`All ${n} pass`; cnt.className="cnt"+(!n?"":fail?" f":" p");
   if(document.activeElement!==$("#reqJson")) $("#reqJson").value=JSON.stringify(S.reqs.map(({id,...r})=>r),null,2);
 }
 function buildReqTable(){
@@ -786,12 +885,12 @@ function buildReqTable(){
     return num(r,"x1","m",5)+num(r,"x2","m",5)+num(r,"y1","m",0.05)+num(r,"y2","m",0.05)+
       `<label>stat<select data-r="${r.id}" data-k="stat">${["max","min","avg"].map(s=>`<option ${r.stat===s?"selected":""}>${s}</option>`).join("")}</select></label>`;
   };
-  $("#reqBody").innerHTML=S.reqs.map((r,i)=>`<tr data-id="${r.id}"><td class="mono">${i+1}</td>
+  $("#reqBody").innerHTML=S.reqs.map((r,i)=>`<tr data-id="${r.id}"><td>${i+1}</td>
       <td><input type="text" class="lab" data-r="${r.id}" data-k="label" value="${esc(r.label||"")}" aria-label="Requirement name"></td>
       <td><select data-r="${r.id}" data-k="type" aria-label="Check type">${["point","range","width","zone"].map(t=>`<option ${r.type===t?"selected":""}>${t}</option>`).join("")}</select></td>
       <td><div class="params">${params(r)}</div></td>
-      <td><div class="lim"><select data-r="${r.id}" data-k="op" aria-label="Comparison"><option value=">=" ${r.op!=="<="?"selected":""}>≥</option><option value="<=" ${r.op==="<="?"selected":""}>≤</option></select><input type="number" step="0.5" data-r="${r.id}" data-k="limit" value="${r.limit??""}" aria-label="Limit"><span class="mono note unit"></span></div></td>
-      <td class="meas"></td><td class="res"></td>
+      <td><div class="lim"><select data-r="${r.id}" data-k="op" aria-label="Comparison"><option value=">=" ${r.op!=="<="?"selected":""}>≥</option><option value="<=" ${r.op==="<="?"selected":""}>≤</option></select><input type="number" step="0.5" data-r="${r.id}" data-k="limit" value="${r.limit??""}" placeholder="none" aria-label="Limit"><span class="unit"></span></div></td>
+      <td class="meas num"></td><td class="res"></td>
       <td><button class="btn ghost" type="button" data-del="${r.id}" aria-label="Delete check ${i+1}">✕</button></td></tr>`).join("");
 }
 
@@ -817,16 +916,18 @@ function beamChips(raw){
 }
 function renderInfo(){
   const meta=(raw,P)=>{if(!raw)return ""; const H=P.Hs,V=P.Vs; return `Type ${raw.ptype===2?"B":raw.ptype===3?"A":raw.ptype} · H ${fmt(H[0],1)}…${fmt(H[H.length-1],1)}° (${H.length}) · V ${fmt(V[0],1)}…${fmt(V[V.length-1],1)}° (${V.length})<br>peak ${Math.round(P.peak).toLocaleString()} cd at H ${fmt(P.pH,1)}°, V ${fmt(P.pV,2)}° · flux ${Math.round(flux(P,S.angleSys))} lm`;};
-  $("#nameL").textContent=rawL.name; $("#metaL").innerHTML=meta(rawL,PL);
+  $("#nameL").textContent=rawL.sample?"Sample beam loaded · drop an .ies file here":rawL.name; $("#metaL").innerHTML=meta(rawL,PL);
   $("#nameR").textContent=rawR?rawR.name:S.mirrorRight?"Left file, mirrored":"Uses the left file";
   $("#metaR").innerHTML=rawR?meta(rawR,PR):""; $("#clearR").hidden=!rawR;
   $("#beamL").innerHTML=beamChips(rawL); $("#beamR").innerHTML=rawR?beamChips(rawR):"";
-  $("#hint-photo").textContent=rawL.sample?"sample beam":rawL.name;
+  $("#hint-photo").textContent=`${S.only==="both"?"both lamps":S.only+" lamp"}${rawR?", 2 files":S.mirrorRight?", mirrored":""}${S.mirrorAll?", beam mirrored":""}`;
+  $("#mVert").setAttribute("aria-pressed",S.method==="hspr"); $("#mRoad").setAttribute("aria-pressed",S.method!=="hspr");
+  const xs=$("#xmaxSel"); xs.value=[100,150,250,400].includes(+S.xmax)?String(S.xmax):"custom";
   const au=S.aimUnit==="pct"?"%":"°";
   $("#aimU").textContent=au; $("#evalH").disabled=S.method!=="hspr";
-  $("#hint-mount").textContent=`${S.method==="hspr"?"vertical planes":"road surface"} · h ${S.height} m · aim ${S.aim} ${au}`;
-  $("#hint-road").textContent=`${S.side} · ${(S.markings||[]).length} lines`;
-  $("#hint-plot").textContent=`0–${S.xmax} m`;
+  $("#hint-mount").textContent=`h ${S.height} m · aim ${S.aim}${S.aimUnit==="pct"?" %":"°"} · pitch ${S.pitch}°`;
+  $("#hint-road").textContent=`${S.side} · ${S.laneW} m lanes · ${(S.markings||[]).length} lines`;
+  $("#hint-plot").textContent=`0–${S.xmax} m · ${parseList(S.levels).length} levels`;
 }
 
 /* ------------------------------------------------------------------ main loop */
@@ -870,6 +971,7 @@ document.querySelectorAll("[data-add]").forEach(b=>b.addEventListener("click",()
 const onReq=e=>{const el=e.target, id=+el.dataset.r; if(!id)return; const r=S.reqs.find(q=>q.id===id); if(!r)return; const k=el.dataset.k;
   if(k==="type"){const keep={id:r.id,label:r.label,type:el.value}; Object.keys(r).forEach(x=>delete r[x]); Object.assign(r,keep,REQ_DEFAULTS[el.value]);}
   else if(k==="label"||k==="op"||k==="stat") r[k]=el.value;
+  else if(k==="limit"&&el.value.trim()==="") r.limit=null;
   else {const v=parseFloat(el.value); if(Number.isFinite(v)) r[k]=v; else return;}
   S.reqsExample=false; schedule();};
 $("#reqBody").addEventListener("change",onReq);
@@ -899,7 +1001,7 @@ function reqRows(){
   const unit=r=>r.type==="range"||r.type==="width"?"m":"lx";
   const head=["#","Requirement","Source","Type","Where","Limit","Measured","Result"];
   const rows=S.reqs.map((r,i)=>{const e=lastEval[r.id]||evalReq(r);
-    return [i+1,r.label||"",r.source||"",r.type,reqWhere(r),`${r.op==="<="?"≤":"≥"} ${r.limit} ${unit(r)}`,e.txt,e.ok===null?"no limit":e.ok?"Pass":"Fail"];});
+    return [i+1,r.label||"",r.source||"",r.type,reqWhere(r),(r.limit===null||r.limit===undefined||r.limit===""?"none":`${r.op==="<="?"≤":"≥"} ${r.limit} ${unit(r)}`),e.txt,e.ok===null?"no limit":e.ok?"Pass":"Fail"];});
   const pass=rows.filter(r=>r[7]==="Pass").length, fail=rows.filter(r=>r[7]==="Fail").length;
   const meta=[["Beam",rawL.name+(rawR?" / "+rawR.name:"")],["Method",S.method==="hspr"?`Vertical planes on road, evaluation height ${S.evalH} m`:"Road surface (horizontal)"],
     ["Mounting",`h ${S.height} m, separation ${S.sep} m, aim ${S.aim} ${S.aimUnit==="pct"?"%":"°"}, toe ${S.toe}°, pitch ${S.pitch}°, roll ${S.roll}°`],
@@ -954,7 +1056,9 @@ function copy(text,msg){
 }
 let tt=0; function toast(m){const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove("show"),2400);}
 
-new ResizeObserver(()=>schedule()).observe($(".plotwrap"));
+new ResizeObserver(()=>schedule()).observe($(".cv"));
+for(const [id,v] of [["#mVert","hspr"],["#mRoad","road"]]) $(id).addEventListener("click",()=>{const sel=$("#method"); if(sel.value===v)return; sel.value=v; sel.dispatchEvent(new Event("change"));});
+$("#xmaxSel").addEventListener("change",e=>{if(e.target.value==="custom")return; S.xmax=+e.target.value; $("#xmax").value=S.xmax; schedule(true);});
 window.roadIlluminate={illuminance:(x,y)=>{buildLamps(); return Eat(x,y);}, state:S};
 renderMarkings(); fitY();
 schedule(true);

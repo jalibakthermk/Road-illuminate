@@ -352,6 +352,7 @@ The flux in the file is found by integrating I over the measured range. The soli
 
 | Date | Change |
 | --- | --- |
+| 2026-11-15 | Web tool redesigned to match beamSynth: control rail with collapsible setting groups that show their values, method switch, summary tiles with a customer-check verdict, banded isolux plot with legend and L/R lateral labels, fold-away road performance and customer check sections. A blank check limit now means no limit instead of 0 lx. |
 | 2026-11-09 | Web tool: load a requirement set from a JSON file, export the customer checks with measured values and results as a table (copy for Excel/Word, or download CSV), and copyright and license footer. Example customer low-beam requirement set added in `examples/`. |
 | 2026-11-07 | Web tool detects the beam type of each loaded file (low beam RHT / LHT / flat cut-off, high beam, fog lamp) from its cut-off gradient, cut-off height left and right, peak and width, and warns when the beam's traffic side differs from the road layout. |
 | 2026-11-07 | Web tool: new isolux icon in the header and browser tab, descriptive text removed, mounting inputs reordered (aim unit, vertical aim, mounting height, lamp separation, toe, pitch pivot, vehicle roll, vehicle pitch, evaluation height), link to HSPRevaluate added, and the page always opens with vertical planes on road. |
