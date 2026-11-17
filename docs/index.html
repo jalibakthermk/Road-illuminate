@@ -114,7 +114,10 @@ details.sec[open] .sv{visibility:hidden}
 .pair-h{display:flex;align-items:center;gap:8px}
 .pair-h input[type=text]{font-weight:600}
 .pair-h .chk{font-size:13.5px;white-space:nowrap}
-.pair .drop{padding:8px}
+.pair .drop{padding:8px 6px}
+.pdrop{display:flex;flex-direction:column;gap:5px;min-width:0}
+.pdrop .beam .beamdetail{display:none}
+.pdrop .btn.ghost{align-self:flex-start;font-size:13px}
 .pair .drop-t{font-size:13.5px}
 .swatch{width:10px;height:10px;border-radius:2px;flex:none}
 .mk{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:4px 6px;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line-soft)}
@@ -183,7 +186,7 @@ tr.fail td:first-child{box-shadow:inset 3px 0 0 var(--fail)}
 .req-table td:first-child{font-weight:600;padding-left:14px}
 .req-table input,.req-table select{padding:4px 6px;font-size:14px}
 .req-table input.lab{min-width:190px}
-.req-table select[data-k=type]{min-width:86px}
+.req-table select[data-k=type]{min-width:122px}
 .req-table .params{display:flex;flex-wrap:wrap;gap:4px 8px}
 .req-table .params label{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)}
 .req-table .params input{width:70px}
@@ -412,6 +415,7 @@ footer a:hover{color:var(--ink)}
       <div class="btnrow">
         <button class="btn" type="button" data-add="point">+ Point</button>
         <button class="btn" type="button" data-add="range">+ Range</button>
+        <button class="btn" type="button" data-add="maxrange">+ Max range</button>
         <button class="btn" type="button" data-add="width">+ Width</button>
         <button class="btn" type="button" data-add="zone">+ Zone</button>
       </div>
@@ -562,17 +566,22 @@ let S=Object.assign({},DEFAULT);
 let rawL=null, rawR=null, textL=null, textR=null;
 try{const j=JSON.parse(localStorage.getItem(STORE)||"null"); if(j&&typeof j==="object"){const o=j.S||{}; if(o.aimUnit===undefined&&o.aim!==undefined) o.aimUnit="pct"; delete o.method; Object.assign(S,o); textL=j.textL||null; textR=j.textR||null;}}catch(e){}
 function save(){try{const o={S}; if(textL&&textL.length<1.5e6)o.textL=textL; if(textR&&textR.length<1.5e6)o.textR=textR;
-  const pt={}; for(const pr of S.pairs) if(pairText[pr.id]&&pairText[pr.id].length<1.5e6) pt[pr.id]=pairText[pr.id];
+  const pt={}; for(const pr of S.pairs){const t=pairText[pr.id]; if(!t)continue; const keep={};
+    for(const k of ["L","R"]) if(t[k]&&t[k].length<1.5e6) keep[k]=t[k]; pt[pr.id]=keep;}
   o.pairTexts=pt; localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
-/* additional lamp pairs: each has its own mounting and, optionally, its own IES file (else it uses the main beam) */
+/* additional lamp pairs: each has its own mounting and, optionally, its own left and right IES files.
+   No left file: the pair uses the main beam. No right file: the right lamp uses the pair's left file (mirrored if set). */
 const pairText={}, pairRaw={}; let pairSeq=1;
 const PAIR_COLORS=["#f0a43a","#5fc8e8","#c58cf2","#7fd67a","#ff8a8a"];
 function newPair(){const n=S.pairs.length+2;
   return {id:pairSeq++,name:`Pair ${n}`,on:true,height:0.35,sep:1.2,x:0.2,y:0,aim:S.aimUnit==="pct"?-1:-0.57,toe:0};}
-function loadPairText(id,text,name,silent){
-  try{const raw=parseIES(text,name); raw.beam=classifyBeam(raw); pairRaw[id]=raw; pairText[id]=text; return null;}
+function loadPairText(id,side,text,name){
+  try{const raw=parseIES(text,name); raw.beam=classifyBeam(raw);
+    (pairRaw[id]=pairRaw[id]||{})[side]=raw; (pairText[id]=pairText[id]||{})[side]=text; return null;}
   catch(e){return e.message;}
 }
+function clearPairFile(id,side){if(pairRaw[id]) delete pairRaw[id][side]; if(pairText[id]) delete pairText[id][side];
+  const p=S.pairs.find(q=>q.id===id); if(p) delete p["file"+side];}
 
 function loadText(which,text,name,silent){
   const err=$(which==="L"?"#errL":"#errR");
@@ -588,7 +597,10 @@ if(textR) loadText("R",textR,(()=>{try{return JSON.parse(localStorage.getItem(ST
 if(!rawL){rawL=sampleIES(); textL=null;}
 if(!Array.isArray(S.pairs)) S.pairs=[];
 try{const saved=JSON.parse(localStorage.getItem(STORE)||"null"); const pt=(saved&&saved.pairTexts)||{};
-  for(const pr of S.pairs){pairSeq=Math.max(pairSeq,pr.id+1); if(pt[pr.id]) loadPairText(pr.id,pt[pr.id],pr.file||"Saved file",true);}}catch(e){}
+  for(const pr of S.pairs){pairSeq=Math.max(pairSeq,pr.id+1);
+    if(pr.file&&!pr.fileL){pr.fileL=pr.file; delete pr.file;}          // older saves: one file per pair = left file
+    let t=pt[pr.id]; if(typeof t==="string") t={L:t};
+    if(t) for(const k of ["L","R"]) if(t[k]) loadPairText(pr.id,k,t[k],pr["file"+k]||"Saved file");}}catch(e){}
 if(!rawL.beam) rawL.beam=classifyBeam(rawL);
 
 /* ------------------------------------------------------------------ geometry */
@@ -629,9 +641,10 @@ function buildLamps(){
   addPair(0,"",0,0,S.sep,S.height,S.aim,S.toe,PL,PR,"#e6eef4");
   S.pairs.forEach((pr,i)=>{
     if(!pr.on) return;
-    const raw=pairRaw[pr.id];
+    const pf=pairRaw[pr.id]||{};
     let A=PL,B=PR;
-    if(raw){A=prepC(raw,S.mirrorAll); B=S.mirrorRight?prepC(raw,!S.mirrorAll):A;}
+    if(pf.L){A=prepC(pf.L,S.mirrorAll); B=S.mirrorRight?prepC(pf.L,!S.mirrorAll):A;}
+    if(pf.R) B=prepC(pf.R,S.mirrorAll);
     addPair(pr.id,pr.name||`Pair ${i+2}`,+pr.x||0,+pr.y||0,+pr.sep||0,+pr.height||0.05,+pr.aim||0,+pr.toe||0,A,B,PAIR_COLORS[i%PAIR_COLORS.length]);
   });
 }
@@ -717,11 +730,28 @@ function zoneStat(r){
   for(let i=0;i<=nx;i++)for(let j=0;j<=ny;j++){const e=Eat(x1+(x2-x1)*i/nx,y1+(y2-y1)*j/ny); mn=Math.min(mn,e); mx=Math.max(mx,e); s+=e; c++;}
   return r.stat==="min"?mn:r.stat==="avg"?s/c:mx;
 }
+/* farthest distance where E reaches thr anywhere between y1 and y2: coarse scan from far to near, then refine */
+function maxReach(thr,y1,y2,xMax=400){
+  const ya=Math.min(y1,y2), yb=Math.max(y1,y2);
+  const hitRow=(x,ys)=>{let best=null; for(const y of ys){const e=Eat(x,y); if(meets(e,thr)&&(best===null||e>best.e)) best={y,e};} return best;};
+  const grid=(a,b,st)=>{const o=[]; for(let y=a;y<=b+1e-9;y+=st) o.push(+y.toFixed(4)); return o;};
+  const coarseY=grid(ya,yb,Math.max(0.05,(yb-ya)/160));
+  let xc=null;
+  for(let x=xMax;x>0;x-=1){if(hitRow(x,coarseY)){xc=x; break;}}
+  if(xc===null) return null;
+  let found={x:xc,y:hitRow(xc,coarseY).y};
+  for(let x=xc+1;x>=xc;x-=0.05){const h=hitRow(+x.toFixed(3),grid(ya,yb,0.05)); if(h){found={x:+x.toFixed(2),y:h.y}; break;}}
+  return found;
+}
 function evalReq(r){
   let v=null,unit="lx",txt;
   if(r.type==="point"){v=Eat(+r.x,+r.y); txt=fmt(v,2)+" lx";}
   else if(r.type==="range"){const d=rangeOn(+r.y,+r.thr); v=d===null?0:d; unit="m"; txt=d===null?"not reached":fmt(d,1)+" m";}
   else if(r.type==="width"){const w=widthAt(+r.x,+r.thr); v=w?w[1]-w[0]:0; unit="m"; txt=w?fmt(v,2)+" m":"none";}
+  else if(r.type==="maxrange"){const m=maxReach(+r.thr,+r.y1,+r.y2); v=m?m.x:0; unit="m";
+    txt=m?`${fmt(m.x,1)} m at ${Math.abs(m.y)<0.005?"axis":fmt(Math.abs(m.y),2)+" m "+(m.y>0?"L":"R")}`:"not reached";
+    const ok0=(r.limit===null||r.limit===undefined||r.limit==="")?null:(r.op==="<="?v<=+r.limit:v>=+r.limit);
+    return {v,txt,ok:ok0,unit,at:m};}
   else if(r.type==="zone"){v=zoneStat(r); txt=`${r.stat||"max"} ${fmt(v,2)} lx`;}
   const lim=(r.limit===null||r.limit===undefined||r.limit==="")?NaN:+r.limit, ok=Number.isFinite(lim)?(r.op==="<="?v<=lim:v>=lim):null;
   return {v,txt,ok,unit};
@@ -825,6 +855,10 @@ function drawBase(){
         if(Number.isFinite(+r.limit)&&r.limit!==null&&r.limit!==""){c.beginPath(); c.moveTo(X(+r.limit),py-6); c.lineTo(X(+r.limit),py+6); c.stroke();}
         if(d>0){c.beginPath(); c.arc(X(Math.min(d,VIEW.x1)),py,3.5,0,7); c.fill();}
         lx=X(Math.min(d||+r.limit||0,VIEW.x1))+6; ly=py-8;}
+      else if(r.type==="maxrange"){const at=res&&res.at, ya=Math.min(r.y1,r.y2), yb=Math.max(r.y1,r.y2);
+        if(Number.isFinite(+r.limit)&&r.limit!==null&&r.limit!==""){c.setLineDash([4,3]); c.beginPath(); c.moveTo(X(+r.limit),Y(Math.min(yb,VIEW.y1))); c.lineTo(X(+r.limit),Y(Math.max(ya,VIEW.y0))); c.stroke(); c.setLineDash([]);}
+        if(at){const px=X(Math.min(at.x,VIEW.x1)),py=Y(at.y); c.beginPath(); c.arc(px,py,4.5,0,7); c.stroke(); c.beginPath(); c.arc(px,py,1.8,0,7); c.fill(); lx=px+7; ly=py-8;}
+        else {lx=X(+r.limit||0)+5; ly=VIEW.m.t+10;}}
       else if(r.type==="width"){const px=X(+r.x), w=widthAt(+r.x,+r.thr,Math.max(30,Math.abs(S.ymin),Math.abs(S.ymax)));
         if(w){c.beginPath(); c.moveTo(px,Y(w[0])); c.lineTo(px,Y(w[1])); c.stroke(); [0,1].forEach(k=>{c.beginPath(); c.moveTo(px-5,Y(w[k])); c.lineTo(px+5,Y(w[k])); c.stroke();});}
         lx=px+6; ly=(w?Y(w[1]):VIEW.m.t+10)-8;}
@@ -918,7 +952,7 @@ function renderReqs(){
     row.querySelector(".meas").textContent=e.txt;
     row.querySelector(".res").innerHTML=e.ok===null?'<span class="pill i">no limit</span>':e.ok?'<span class="pill p">Pass</span>':'<span class="pill f">Fail</span>';
     row.classList.toggle("fail",e.ok===false);
-    row.querySelector(".unit").textContent=r.type==="range"||r.type==="width"?"m":"lx";});
+    row.querySelector(".unit").textContent=r.type==="range"||r.type==="width"||r.type==="maxrange"?"m":"lx";});
   $("#reqEmpty").hidden=S.reqs.length>0;
   $("#reqSummary").innerHTML=S.reqsExample&&S.reqs.length?'<span class="chip ex">Example set</span>':"";
   const n=pass+fail, cnt=$("#reqCount");
@@ -931,12 +965,13 @@ function buildReqTable(){
     if(r.type==="point") return num(r,"x","m")+num(r,"y","m",0.05);
     if(r.type==="range") return num(r,"y","m",0.05)+num(r,"thr","lx",0.5);
     if(r.type==="width") return num(r,"x","m",1)+num(r,"thr","lx",0.5);
+    if(r.type==="maxrange") return num(r,"thr","lx",0.5)+num(r,"y1","m",0.5)+num(r,"y2","m",0.5);
     return num(r,"x1","m",5)+num(r,"x2","m",5)+num(r,"y1","m",0.05)+num(r,"y2","m",0.05)+
       `<label>stat<select data-r="${r.id}" data-k="stat">${["max","min","avg"].map(s=>`<option ${r.stat===s?"selected":""}>${s}</option>`).join("")}</select></label>`;
   };
   $("#reqBody").innerHTML=S.reqs.map((r,i)=>`<tr data-id="${r.id}"><td>${i+1}</td>
       <td><input type="text" class="lab" data-r="${r.id}" data-k="label" value="${esc(r.label||"")}" aria-label="Requirement name"></td>
-      <td><select data-r="${r.id}" data-k="type" aria-label="Check type">${["point","range","width","zone"].map(t=>`<option ${r.type===t?"selected":""}>${t}</option>`).join("")}</select></td>
+      <td><select data-r="${r.id}" data-k="type" aria-label="Check type">${[["point","point"],["range","range on line"],["maxrange","max range"],["width","width"],["zone","zone"]].map(([t,l])=>`<option value="${t}" ${r.type===t?"selected":""}>${l}</option>`).join("")}</select></td>
       <td><div class="params">${params(r)}</div></td>
       <td><div class="lim"><select data-r="${r.id}" data-k="op" aria-label="Comparison"><option value=">=" ${r.op!=="<="?"selected":""}>≥</option><option value="<=" ${r.op==="<="?"selected":""}>≤</option></select><input type="number" step="0.5" data-r="${r.id}" data-k="limit" value="${r.limit??""}" placeholder="none" aria-label="Limit"><span class="unit"></span></div></td>
       <td class="meas num"></td><td class="res"></td>
@@ -966,15 +1001,16 @@ function beamChips(raw){
 function renderPairs(){
   const au=S.aimUnit==="pct"?"%":"°";
   const num=(p,k,label,u,step,hint)=>`<label class="f">${label}<div class="inp"><input type="number" step="${step}" data-p="${p.id}" data-k="${k}" value="${p[k]}"><span class="u">${u}</span></div>${hint?`<small>${hint}</small>`:""}</label>`;
-  $("#pairList").innerHTML=S.pairs.map((p,i)=>{const raw=pairRaw[p.id], col=PAIR_COLORS[i%PAIR_COLORS.length];
+  const drop=(p,side,raw,fallback)=>`<div class="pdrop"><label class="drop" for="pf${p.id}${side}"><input type="file" id="pf${p.id}${side}" data-pfile="${p.id}" data-side="${side}" accept=".ies,.IES,.txt">
+        <span class="drop-t">${side==="L"?"Left lamp":"Right lamp"}</span><span class="drop-s">${raw?esc(raw.name):fallback}</span></label>
+        ${raw?`<div class="beam">${beamChips(raw)}</div><button class="btn ghost" type="button" data-pclear="${p.id}" data-side="${side}">Remove file</button>`:""}</div>`;
+  $("#pairList").innerHTML=S.pairs.map((p,i)=>{const pf=pairRaw[p.id]||{}, col=PAIR_COLORS[i%PAIR_COLORS.length];
     return `<div class="pair${p.on?"":" off"}" data-id="${p.id}">
       <div class="pair-h"><span class="swatch" style="background:${col}"></span>
         <input type="text" data-p="${p.id}" data-k="name" value="${esc(p.name)}" aria-label="Pair name">
         <label class="chk"><input type="checkbox" data-p="${p.id}" data-k="on" ${p.on?"checked":""}>On</label>
         <button class="btn ghost" type="button" data-pdel="${p.id}" aria-label="Remove ${esc(p.name)}">✕</button></div>
-      <label class="drop" for="pf${p.id}"><input type="file" id="pf${p.id}" data-pfile="${p.id}" accept=".ies,.IES,.txt">
-        <span class="drop-t">${raw?esc(raw.name):"Uses the main beam"}</span><span class="drop-s">${raw?"drop another .ies to replace":"drop an .ies file for this pair"}</span></label>
-      ${raw?`<div class="beam">${beamChips(raw)}</div><div class="btnrow"><button class="btn ghost" type="button" data-pclear="${p.id}">Use the main beam instead</button></div>`:""}
+      <div class="row2">${drop(p,"L",pf.L,"main beam")}${drop(p,"R",pf.R,pf.L?(S.mirrorRight?"left file, mirrored":"left file"):"main beam")}</div>
       <div class="err" data-perr="${p.id}" hidden></div>
       <div class="row2">${num(p,"height","Mounting height","m",0.01)}${num(p,"sep","Lamp separation","m",0.01)}</div>
       <div class="row2">${num(p,"x","Fore / aft","m",0.05,"+ ahead of main pair")}${num(p,"y","Lateral offset","m",0.05,"+ left")}</div>
@@ -1026,7 +1062,7 @@ SEL.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("change",(
     S.aim=cv2(S.aim); $("#aim").value=S.aim; S.pairs.forEach(p=>p.aim=cv2(+p.aim||0)); S.aimUnit=el.value; renderPairs();}
   S[k]=el.value; if(ROAD.has(k)){buildMarkings(); renderMarkings();} fitY(); schedule(true);});});
 TXT.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("change",()=>{S[k]=el.value; schedule(true);});});
-CHK.forEach(k=>{const el=$("#"+k); el.checked=!!S[k]; el.addEventListener("change",()=>{S[k]=el.checked; schedule(true);});});
+CHK.forEach(k=>{const el=$("#"+k); el.checked=!!S[k]; el.addEventListener("change",()=>{S[k]=el.checked; if(k==="mirrorRight"||k==="mirrorAll") renderPairs(); schedule(true);});});
 
 $("#genRoad").addEventListener("click",()=>{buildMarkings(); renderMarkings(); S.yfit="road"; $("#yfit").value="road"; fitY(); schedule(true); toast("Markings rebuilt from layout");});
 $("#addMk").addEventListener("click",()=>{S.markings.push({name:"Line",y:0,style:"solid",color:"white"}); renderMarkings(); schedule(true);});
@@ -1035,9 +1071,9 @@ $("#mkBody").addEventListener("input",e=>{const el=e.target, i=el.dataset.m; if(
 $("#mkBody").addEventListener("click",e=>{const b=e.target.closest("[data-mdel]"); if(!b)return; S.markings.splice(+b.dataset.mdel,1); renderMarkings(); schedule(true);});
 
 // requirements editing
-const REQ_DEFAULTS={point:{x:30,y:0,op:">=",limit:5},range:{y:0,thr:1,op:">=",limit:50},width:{x:20,thr:1,op:">=",limit:8},zone:{x1:50,x2:100,y1:1.75,y2:5.25,stat:"max",op:"<=",limit:1}};
+const REQ_DEFAULTS={maxrange:{thr:3,y1:-15,y2:15,op:">=",limit:60},point:{x:30,y:0,op:">=",limit:5},range:{y:0,thr:1,op:">=",limit:50},width:{x:20,thr:1,op:">=",limit:8},zone:{x1:50,x2:100,y1:1.75,y2:5.25,stat:"max",op:"<=",limit:1}};
 document.querySelectorAll("[data-add]").forEach(b=>b.addEventListener("click",()=>{const t=b.dataset.add;
-  S.reqs.push(Object.assign({id:reqSeq++,label:`New ${t} check`,type:t},REQ_DEFAULTS[t])); S.reqsExample=false; schedule();}));
+  S.reqs.push(Object.assign({id:reqSeq++,label:t==="maxrange"?`Max range of ${REQ_DEFAULTS[t].thr} lx line`:`New ${t} check`,type:t},REQ_DEFAULTS[t])); S.reqsExample=false; schedule();}));
 const onReq=e=>{const el=e.target, id=+el.dataset.r; if(!id)return; const r=S.reqs.find(q=>q.id===id); if(!r)return; const k=el.dataset.k;
   if(k==="type"){const keep={id:r.id,label:r.label,type:el.value}; Object.keys(r).forEach(x=>delete r[x]); Object.assign(r,keep,REQ_DEFAULTS[el.value]);}
   else if(k==="label"||k==="op"||k==="stat") r[k]=el.value;
@@ -1053,7 +1089,7 @@ $("#copyJson").addEventListener("click",()=>copy($("#reqJson").value,"Requiremen
 function applyReqJson(text,from){const err=$("#jsonErr");
   try{let a=JSON.parse(text); if(a&&!Array.isArray(a)&&Array.isArray(a.checks)) a=a.checks;
     if(!Array.isArray(a)) throw new Error("The JSON must be a list of checks.");
-    const ok=a.filter(r=>r&&["point","range","width","zone"].includes(r.type));
+    const ok=a.filter(r=>r&&["point","range","maxrange","width","zone"].includes(r.type));
     if(!ok.length) throw new Error("No valid checks found. Each needs a type of point, range, width or zone.");
     S.reqs=ok.map(r=>Object.assign({},REQ_DEFAULTS[r.type],r,{id:reqSeq++})); S.reqsExample=false; err.hidden=true; schedule(); toast(`${ok.length} checks loaded${from?" from "+from:""}`);}
   catch(e){err.textContent="Could not read the JSON: "+e.message; err.hidden=false; err.closest("details").open=true;}}
@@ -1066,16 +1102,17 @@ function reqWhere(r){const n=v=>fmt(+v,2).replace(/\.?0+$/,""), m=v=>n(v)+" m";
   if(r.type==="point") return `x ${m(r.x)}, y ${m(r.y)}`;
   if(r.type==="range") return `line y ${m(r.y)}, at ${r.thr} lx`;
   if(r.type==="width") return `x ${m(r.x)}, at ${r.thr} lx`;
+  if(r.type==="maxrange") return `max range of ${r.thr} lx line, y ${n(Math.min(r.y1,r.y2))}…${m(Math.max(r.y1,r.y2))}`;
   return `x ${n(Math.min(r.x1,r.x2))}–${m(Math.max(r.x1,r.x2))}, y ${n(Math.min(r.y1,r.y2))}…${m(Math.max(r.y1,r.y2))}, ${r.stat||"max"}`;}
 function reqRows(){
-  const unit=r=>r.type==="range"||r.type==="width"?"m":"lx";
+  const unit=r=>r.type==="range"||r.type==="width"||r.type==="maxrange"?"m":"lx";
   const head=["#","Requirement","Source","Type","Where","Limit","Measured","Result"];
   const rows=S.reqs.map((r,i)=>{const e=lastEval[r.id]||evalReq(r);
     return [i+1,r.label||"",r.source||"",r.type,reqWhere(r),(r.limit===null||r.limit===undefined||r.limit===""?"none":`${r.op==="<="?"≤":"≥"} ${r.limit} ${unit(r)}`),e.txt,e.ok===null?"no limit":e.ok?"Pass":"Fail"];});
   const pass=rows.filter(r=>r[7]==="Pass").length, fail=rows.filter(r=>r[7]==="Fail").length;
   const meta=[["Beam",rawL.name+(rawR?" / "+rawR.name:"")],["Method",S.method==="hspr"?`Vertical planes on road, evaluation height ${S.evalH} m`:"Road surface (horizontal)"],
     ["Mounting",`h ${S.height} m, separation ${S.sep} m, aim ${S.aim} ${S.aimUnit==="pct"?"%":"°"}, toe ${S.toe}°, pitch ${S.pitch}°, roll ${S.roll}°`],
-    ...S.pairs.filter(p=>p.on).map(p=>[p.name,`${pairRaw[p.id]?pairRaw[p.id].name:"main beam"}; x ${p.x} m, lateral ${p.y} m, h ${p.height} m, separation ${p.sep} m, aim ${p.aim} ${S.aimUnit==="pct"?"%":"°"}, toe ${p.toe}°`]),
+    ...S.pairs.filter(p=>p.on).map(p=>{const pf=pairRaw[p.id]||{}; return [p.name,`left ${pf.L?pf.L.name:"main beam"}, right ${pf.R?pf.R.name:pf.L?"left file":"main beam"}; x ${p.x} m, lateral ${p.y} m, h ${p.height} m, separation ${p.sep} m, aim ${p.aim} ${S.aimUnit==="pct"?"%":"°"}, toe ${p.toe}°`];}),
     ["Traffic side",S.side+(S.mirrorAll?" (beam mirrored)":"")],["Summary",`${pass} pass, ${fail} fail of ${rows.length}`],["Date",new Date().toISOString().slice(0,10)]];
   return {meta,head,rows};
 }
@@ -1110,12 +1147,13 @@ $("#pairList").addEventListener("input",e=>{const el=e.target, p=pairById(el.dat
   else {const v=parseFloat(el.value); if(!Number.isFinite(v))return; p[k]=v;}
   schedule(true);});
 $("#pairList").addEventListener("change",e=>{const el=e.target; if(!el.dataset.pfile)return; const p=pairById(el.dataset.pfile), f=el.files[0]; el.value=""; if(!p||!f)return;
-  const rd=new FileReader(); rd.onload=()=>{const err=loadPairText(p.id,String(rd.result),f.name);
+  const side=el.dataset.side||"L";
+  const rd=new FileReader(); rd.onload=()=>{const err=loadPairText(p.id,side,String(rd.result),f.name);
     if(err){const box=document.querySelector(`[data-perr="${p.id}"]`); box.textContent=err; box.hidden=false; return;}
-    p.file=f.name; renderPairs(); schedule(true); toast(`${p.name}: loaded ${f.name}`);}; rd.readAsText(f);});
+    p["file"+side]=f.name; renderPairs(); schedule(true); toast(`${p.name} ${side==="L"?"left":"right"} lamp: loaded ${f.name}`);}; rd.readAsText(f);});
 $("#pairList").addEventListener("click",e=>{const d=e.target.closest("[data-pdel]"), c=e.target.closest("[data-pclear]");
   if(d){const id=+d.dataset.pdel; S.pairs=S.pairs.filter(p=>p.id!==id); delete pairRaw[id]; delete pairText[id]; renderPairs(); schedule(true);}
-  if(c){const id=+c.dataset.pclear; delete pairRaw[id]; delete pairText[id]; const p=pairById(id); if(p) delete p.file; renderPairs(); schedule(true);}});
+  if(c){clearPairFile(+c.dataset.pclear,c.dataset.side||"L"); renderPairs(); schedule(true);}});
 $("#pairList").addEventListener("dragover",e=>{const z=e.target.closest(".drop"); if(z){e.preventDefault(); z.classList.add("over");}});
 $("#pairList").addEventListener("dragleave",e=>{const z=e.target.closest(".drop"); if(z) z.classList.remove("over");});
 $("#pairList").addEventListener("drop",e=>{const z=e.target.closest(".drop"); if(!z)return; e.preventDefault(); z.classList.remove("over");

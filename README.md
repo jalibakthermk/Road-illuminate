@@ -25,10 +25,10 @@ The web tool (`index.html`, with an identical copy in `docs/index.html` so GitHu
 - See the detected beam type of each file: low beam (RHT, LHT or flat cut-off), high beam or fog lamp, with the cut-off gradient and cut-off height that led to it.
 - Choose the illuminance method: vertical planes on road (default) or road surface.
 - Set the mounting height, lamp separation, aim (degrees or percent), toe, vehicle pitch and roll, and the evaluation height of the vertical planes.
-- Add more lamp pairs (fog lamps, auxiliary lamps) at other mounting positions, each with its own IES file or the main beam; their light is added to the main pair.
+- Add more lamp pairs (fog lamps, auxiliary lamps) at other mounting positions, each with its own left and right IES files or the main beam; their light is added to the main pair.
 - See the road isolux plot with lane markings and a live readout of illuminance and H/V angles under the pointer.
 - Build the lane layout from traffic side, lane width and lane counts, then edit any line.
-- Add customer requirement checks (point, range, width, zone) that show pass or fail live. Load a requirement set from a JSON file or paste it, and export the checks with measured values and pass/fail as a table (copy for Excel/Word, or download CSV). `examples/lowbeam_customer_requirements.json` is a complete low-beam customer set.
+- Add customer requirement checks (point, range on a line, max range of an isolux line anywhere across the road, width, zone) that show pass or fail live. Load a requirement set from a JSON file or paste it, and export the checks with measured values and pass/fail as a table (copy for Excel/Word, or download CSV). `examples/lowbeam_customer_requirements.json` is a complete low-beam customer set.
 
 It opens with a synthetic sample beam so it works straight away. The sections below describe the Python script.
 
@@ -353,6 +353,7 @@ The flux in the file is found by integrating I over the measured range. The soli
 
 | Date | Change |
 | --- | --- |
+| 2026-11-17 | Web tool: each additional lamp pair can take separate left and right IES files. New customer check `maxrange`: the farthest distance an isolux line reaches at any lateral position within a chosen window. |
 | 2026-11-17 | Web tool: additional lamp pairs (fog lamps, auxiliary or truck lamps), each with its own IES file or the main beam, mounting height, separation, fore/aft and lateral position, aim and toe. The illuminance of all pairs is added; the hover readout shows each pair's share. |
 | 2026-11-15 | Web tool redesigned to match beamSynth: control rail with collapsible setting groups that show their values, method switch, summary tiles with a customer-check verdict, banded isolux plot with legend and L/R lateral labels, fold-away road performance and customer check sections. A blank check limit now means no limit instead of 0 lx. |
 | 2026-11-09 | Web tool: load a requirement set from a JSON file, export the customer checks with measured values and results as a table (copy for Excel/Word, or download CSV), and copyright and license footer. Example customer low-beam requirement set added in `examples/`. |
