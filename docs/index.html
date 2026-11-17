@@ -108,6 +108,13 @@ details.sec[open] .sv{visibility:hidden}
 .sb{display:flex;flex-direction:column;gap:10px;padding:2px 0 14px}
 .mk-list{display:flex;flex-direction:column;gap:8px}
 .pair-list{display:flex;flex-direction:column;gap:12px}
+.ptabs{display:flex;align-items:flex-end;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:thin}
+.ptab{display:flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid transparent;border-bottom:0;border-radius:7px 7px 0 0;background:none;color:var(--muted);font:inherit;font-size:13.5px;white-space:nowrap;cursor:pointer;margin-bottom:-1px}
+.ptab:hover{color:var(--ink)}
+.ptab[aria-selected=true]{background:var(--surface);border-color:var(--line);color:var(--ink);font-weight:600}
+.ptab.off{opacity:.55}
+.ptab.add{padding:7px 10px;font-size:17px;line-height:1;font-weight:500}
+.pair-empty{font-size:13.5px;color:var(--muted)}
 .pair-list:empty{display:none}
 .pair{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:9px;background:var(--surface)}
 .pair.off{opacity:.6}
@@ -327,10 +334,10 @@ footer a:hover{color:var(--ink)}
   </details>
 
   <details class="sec" id="sec-pairs">
-    <summary><span class="st">Additional lamp pairs</span><span class="sv" id="hint-pairs"></span></summary>
+    <summary><span class="st">Lamp pairs</span><span class="sv" id="hint-pairs"></span></summary>
     <div class="sb">
+      <div class="ptabs" id="pairTabs" role="tablist" aria-label="Additional lamp pairs"></div>
       <div class="pair-list" id="pairList"></div>
-      <div class="btnrow"><button class="btn primary" type="button" id="addPair">Add lamp pair</button></div>
     </div>
   </details>
 
@@ -571,7 +578,7 @@ function save(){try{const o={S}; if(textL&&textL.length<1.5e6)o.textL=textL; if(
   o.pairTexts=pt; localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
 /* additional lamp pairs: each has its own mounting and, optionally, its own left and right IES files.
    No left file: the pair uses the main beam. No right file: the right lamp uses the pair's left file (mirrored if set). */
-const pairText={}, pairRaw={}; let pairSeq=1;
+const pairText={}, pairRaw={}; let pairSeq=1, activePair=null;
 const PAIR_COLORS=["#f0a43a","#5fc8e8","#c58cf2","#7fd67a","#ff8a8a"];
 function newPair(){const n=S.pairs.length+2;
   return {id:pairSeq++,name:`Pair ${n}`,on:true,height:0.35,sep:1.2,x:0.2,y:0,aim:S.aimUnit==="pct"?-1:-0.57,toe:0};}
@@ -1004,7 +1011,10 @@ function renderPairs(){
   const drop=(p,side,raw,fallback)=>`<div class="pdrop"><label class="drop" for="pf${p.id}${side}"><input type="file" id="pf${p.id}${side}" data-pfile="${p.id}" data-side="${side}" accept=".ies,.IES,.txt">
         <span class="drop-t">${side==="L"?"Left lamp":"Right lamp"}</span><span class="drop-s">${raw?esc(raw.name):fallback}</span></label>
         ${raw?`<div class="beam">${beamChips(raw)}</div><button class="btn ghost" type="button" data-pclear="${p.id}" data-side="${side}">Remove file</button>`:""}</div>`;
-  $("#pairList").innerHTML=S.pairs.map((p,i)=>{const pf=pairRaw[p.id]||{}, col=PAIR_COLORS[i%PAIR_COLORS.length];
+  if(!S.pairs.some(p=>p.id===activePair)) activePair=S.pairs.length?S.pairs[0].id:null;
+  $("#pairTabs").innerHTML=S.pairs.map((p,i)=>`<button class="ptab${p.on?"":" off"}" type="button" role="tab" data-ptab="${p.id}" aria-selected="${p.id===activePair}"><span class="swatch" style="background:${PAIR_COLORS[i%PAIR_COLORS.length]}"></span>${esc(p.name)}</button>`).join("")
+    +`<button class="ptab add" type="button" id="addPair" aria-label="Add lamp pair" title="Add lamp pair">+</button>`;
+  $("#pairList").innerHTML=!S.pairs.length?`<div class="pair-empty">Only the main pair is used. Press + to add a pair at another mounting position.</div>`:S.pairs.map((p,i)=>{if(p.id!==activePair)return ""; const pf=pairRaw[p.id]||{}, col=PAIR_COLORS[i%PAIR_COLORS.length];
     return `<div class="pair${p.on?"":" off"}" data-id="${p.id}">
       <div class="pair-h"><span class="swatch" style="background:${col}"></span>
         <input type="text" data-p="${p.id}" data-k="name" value="${esc(p.name)}" aria-label="Pair name">
@@ -1139,11 +1149,13 @@ async function saveFile(name,data,type){
 }
 
 // additional lamp pairs
-$("#addPair").addEventListener("click",()=>{S.pairs.push(newPair()); renderPairs(); schedule(true); $("#sec-pairs").open=true;});
+$("#pairTabs").addEventListener("click",e=>{
+  if(e.target.closest("#addPair")){const p=newPair(); S.pairs.push(p); activePair=p.id; renderPairs(); schedule(true); return;}
+  const t=e.target.closest("[data-ptab]"); if(t){activePair=+t.dataset.ptab; renderPairs();}});
 const pairById=id=>S.pairs.find(p=>p.id===+id);
 $("#pairList").addEventListener("input",e=>{const el=e.target, p=pairById(el.dataset.p); if(!p||el.type==="file")return; const k=el.dataset.k;
-  if(k==="name") p.name=el.value;
-  else if(k==="on"){p.on=el.checked; el.closest(".pair").classList.toggle("off",!p.on);}
+  if(k==="name"){p.name=el.value; const tb=document.querySelector(`[data-ptab="${p.id}"]`); if(tb) tb.lastChild.textContent=p.name;}
+  else if(k==="on"){p.on=el.checked; el.closest(".pair").classList.toggle("off",!p.on); const tb=document.querySelector(`[data-ptab="${p.id}"]`); if(tb) tb.classList.toggle("off",!p.on);}
   else {const v=parseFloat(el.value); if(!Number.isFinite(v))return; p[k]=v;}
   schedule(true);});
 $("#pairList").addEventListener("change",e=>{const el=e.target; if(!el.dataset.pfile)return; const p=pairById(el.dataset.pfile), f=el.files[0]; el.value=""; if(!p||!f)return;
