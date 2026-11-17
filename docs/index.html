@@ -107,6 +107,16 @@ details.sec>summary:hover .st{color:var(--accent)}
 details.sec[open] .sv{visibility:hidden}
 .sb{display:flex;flex-direction:column;gap:10px;padding:2px 0 14px}
 .mk-list{display:flex;flex-direction:column;gap:8px}
+.pair-list{display:flex;flex-direction:column;gap:12px}
+.pair-list:empty{display:none}
+.pair{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:9px;background:var(--surface)}
+.pair.off{opacity:.6}
+.pair-h{display:flex;align-items:center;gap:8px}
+.pair-h input[type=text]{font-weight:600}
+.pair-h .chk{font-size:13.5px;white-space:nowrap}
+.pair .drop{padding:8px}
+.pair .drop-t{font-size:13.5px}
+.swatch{width:10px;height:10px;border-radius:2px;flex:none}
 .mk{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:4px 6px;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line-soft)}
 .mk .nm{grid-column:1/4}
 .mk input,.mk select{padding:5px 7px;font-size:14px}
@@ -310,6 +320,14 @@ footer a:hover{color:var(--ink)}
       <div class="row2">
         <label class="f">Intensity factor<div class="inp"><input type="number" id="scale" step="0.05" min="0"><span class="u">×</span></div></label>
       </div>
+    </div>
+  </details>
+
+  <details class="sec" id="sec-pairs">
+    <summary><span class="st">Additional lamp pairs</span><span class="sv" id="hint-pairs"></span></summary>
+    <div class="sb">
+      <div class="pair-list" id="pairList"></div>
+      <div class="btnrow"><button class="btn primary" type="button" id="addPair">Add lamp pair</button></div>
     </div>
   </details>
 
@@ -538,12 +556,23 @@ const DEFAULT={
   method:"hspr",evalH:0,aimUnit:"deg",height:0.65,sep:1.4,aim:-0.57,toe:0,pitch:0,roll:0,pivot:-2.7,scale:1,angleSys:"azel",only:"both",mirrorRight:false,mirrorAll:false,
   side:"RHT",laneW:3.5,ownN:1,oppN:1,vehLane:1,laneOff:0,centre:"dashed",centreCol:"white",
   xmax:150,yfit:"road",ymin:-6,ymax:9,levels:"0.5, 1, 3, 5, 10, 20, 50, 100",thr:"1, 3",widthX:"10, 20, 30, 50",
-  showContours:true,showReqs:true,markings:null,reqs:null,reqsExample:true
+  showContours:true,showReqs:true,markings:null,reqs:null,reqsExample:true,pairs:[]
 };
 let S=Object.assign({},DEFAULT);
 let rawL=null, rawR=null, textL=null, textR=null;
 try{const j=JSON.parse(localStorage.getItem(STORE)||"null"); if(j&&typeof j==="object"){const o=j.S||{}; if(o.aimUnit===undefined&&o.aim!==undefined) o.aimUnit="pct"; delete o.method; Object.assign(S,o); textL=j.textL||null; textR=j.textR||null;}}catch(e){}
-function save(){try{const o={S}; if(textL&&textL.length<1.5e6)o.textL=textL; if(textR&&textR.length<1.5e6)o.textR=textR; localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
+function save(){try{const o={S}; if(textL&&textL.length<1.5e6)o.textL=textL; if(textR&&textR.length<1.5e6)o.textR=textR;
+  const pt={}; for(const pr of S.pairs) if(pairText[pr.id]&&pairText[pr.id].length<1.5e6) pt[pr.id]=pairText[pr.id];
+  o.pairTexts=pt; localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
+/* additional lamp pairs: each has its own mounting and, optionally, its own IES file (else it uses the main beam) */
+const pairText={}, pairRaw={}; let pairSeq=1;
+const PAIR_COLORS=["#f0a43a","#5fc8e8","#c58cf2","#7fd67a","#ff8a8a"];
+function newPair(){const n=S.pairs.length+2;
+  return {id:pairSeq++,name:`Pair ${n}`,on:true,height:0.35,sep:1.2,x:0.2,y:0,aim:S.aimUnit==="pct"?-1:-0.57,toe:0};}
+function loadPairText(id,text,name,silent){
+  try{const raw=parseIES(text,name); raw.beam=classifyBeam(raw); pairRaw[id]=raw; pairText[id]=text; return null;}
+  catch(e){return e.message;}
+}
 
 function loadText(which,text,name,silent){
   const err=$(which==="L"?"#errL":"#errR");
@@ -557,6 +586,9 @@ function loadText(which,text,name,silent){
 if(textL) loadText("L",textL,(()=>{try{return JSON.parse(localStorage.getItem(STORE)).S.nameL}catch(e){return "Saved file"}})(),true);
 if(textR) loadText("R",textR,(()=>{try{return JSON.parse(localStorage.getItem(STORE)).S.nameR}catch(e){return "Saved file"}})(),true);
 if(!rawL){rawL=sampleIES(); textL=null;}
+if(!Array.isArray(S.pairs)) S.pairs=[];
+try{const saved=JSON.parse(localStorage.getItem(STORE)||"null"); const pt=(saved&&saved.pairTexts)||{};
+  for(const pr of S.pairs){pairSeq=Math.max(pairSeq,pr.id+1); if(pt[pr.id]) loadPairText(pr.id,pt[pr.id],pr.file||"Saved file",true);}}catch(e){}
 if(!rawL.beam) rawL.beam=classifyBeam(rawL);
 
 /* ------------------------------------------------------------------ geometry */
@@ -572,23 +604,36 @@ function lampAxes(aimPct,yawDeg){
   return {f,l,u};
 }
 let LAMPS=[], PL=null, PR=null;
+// prepared tables are cached per file and mirror state, so many lamp pairs stay quick
+const prepC=(raw,m)=>{raw._pc=raw._pc||{}; const k=m?"m":"n"; return raw._pc[k]||(raw._pc[k]=prepare(raw,m));};
 function buildLamps(){
-  PL=prepare(rawL,S.mirrorAll);
-  if(rawR) PR=prepare(rawR,S.mirrorAll);
-  else if(S.mirrorRight) PR=prepare(rawL,!S.mirrorAll);
+  PL=prepC(rawL,S.mirrorAll);
+  if(rawR) PR=prepC(rawR,S.mirrorAll);
+  else if(S.mirrorRight) PR=prepC(rawL,!S.mirrorAll);
   else PR=PL;
   const R=mul(rotX(S.roll*D2R),rotNose(S.pitch*D2R));
-  const piv=[S.pivot,0,0], half=S.sep/2;
+  const piv=[S.pivot,0,0], hs=S.method==="hspr";
   LAMPS=[];
-  for(const [name,y,yaw,P] of [["left",half,S.toe,PL],["right",-half,-S.toe,PR]]){
-    if(S.only!=="both"&&S.only!==name) continue;
-    const p0=[0-piv[0],y,S.height], pr=mv(R,p0), pos=[pr[0]+piv[0],pr[1],pr[2]];
-    const hs=S.method==="hspr";
-    // HSPR applies aim and toe as an angular shift of the photometric data; road mode tilts the lamp axis
-    const ax=hs?lampAxes(0,0):lampAxes(aimPct(),yaw);
-    LAMPS.push({name,px:pos[0],py:pos[1],pz:pos[2],f:mv(R,ax.f),l:mv(R,ax.l),u:mv(R,ax.u),P,
-      aimV:hs?aimDeg():0, aimH:hs?-yaw:0});
-  }
+  // one pair of lamps at (x, y ± sep/2, h); pitch and roll move every pair with the vehicle
+  const addPair=(group,label,x0,yc,sep,h,aim,toe,PLx,PRx,color)=>{
+    for(const [side,y,yaw,P] of [["left",yc+sep/2,toe,PLx],["right",yc-sep/2,-toe,PRx]]){
+      if(S.only!=="both"&&S.only!==side) continue;
+      const p0=[x0-piv[0],y,h], pr=mv(R,p0), pos=[pr[0]+piv[0],pr[1],pr[2]];
+      // HSPR applies aim and toe as an angular shift of the photometric data; road mode tilts the lamp axis
+      const aPct=S.aimUnit==="pct"?aim:Math.tan(aim*D2R)*100, aDeg=S.aimUnit==="pct"?Math.atan(aim/100)/D2R:aim;
+      const ax=hs?lampAxes(0,0):lampAxes(aPct,yaw);
+      LAMPS.push({name:label?`${label} ${side}`:side,group,color,px:pos[0],py:pos[1],pz:pos[2],f:mv(R,ax.f),l:mv(R,ax.l),u:mv(R,ax.u),P,
+        aimV:hs?aDeg:0, aimH:hs?-yaw:0});
+    }
+  };
+  addPair(0,"",0,0,S.sep,S.height,S.aim,S.toe,PL,PR,"#e6eef4");
+  S.pairs.forEach((pr,i)=>{
+    if(!pr.on) return;
+    const raw=pairRaw[pr.id];
+    let A=PL,B=PR;
+    if(raw){A=prepC(raw,S.mirrorAll); B=S.mirrorRight?prepC(raw,!S.mirrorAll):A;}
+    addPair(pr.id,pr.name||`Pair ${i+2}`,+pr.x||0,+pr.y||0,+pr.sep||0,+pr.height||0.05,+pr.aim||0,+pr.toe||0,A,B,PAIR_COLORS[i%PAIR_COLORS.length]);
+  });
 }
 const aimDeg=()=>S.aimUnit==="pct"?Math.atan(S.aim/100)/D2R:S.aim;
 const aimPct=()=>S.aimUnit==="pct"?S.aim:Math.tan(S.aim*D2R)*100;
@@ -600,10 +645,10 @@ function hsprI(L,H,V){
   h=Math.max(-45,Math.min(45,h)); v=Math.max(-15,Math.min(15,v));
   return intensity(L.P,h-L.aimH,v-L.aimV);
 }
-function Eat(x,y){
+function Eat(x,y,lamps){
   let E=0; const az=S.angleSys==="azel", hs=S.method==="hspr";
   const zp=hs?S.evalH:0;
-  for(const L of LAMPS){
+  for(const L of (lamps||LAMPS)){
     if(L.pz<=0&&!hs) continue;
     const vx=x-L.px, vy=y-L.py, vz=zp-L.pz;
     const f=L.f[0]*vx+L.f[1]*vy+L.f[2]*vz; if(f<=0) continue;
@@ -788,7 +833,7 @@ function drawBase(){
   }
   c.restore();
   // lamps
-  for(const L of LAMPS){const px=X(Math.max(VIEW.x0,L.px)),py=Y(L.py); c.fillStyle="#e6eef4"; c.beginPath(); c.moveTo(px,py-4.5);c.lineTo(px+8,py);c.lineTo(px,py+4.5);c.closePath();c.fill();}
+  for(const L of LAMPS){const px=X(Math.max(VIEW.x0,L.px)),py=Y(L.py); c.fillStyle=L.color||"#e6eef4"; c.beginPath(); c.moveTo(px,py-4.5);c.lineTo(px+8,py);c.lineTo(px,py+4.5);c.closePath();c.fill();}
   // axes: distance ahead below, lateral as L / R
   c.fillStyle=css("--plot-dim"); c.font="11px "+fb; c.textAlign="center"; c.textBaseline="alphabetic";
   const xs=[]; for(let x=Math.ceil(VIEW.x0/sx)*sx;x<=VIEW.x1+1e-9;x+=sx) xs.push(x);
@@ -817,7 +862,11 @@ function onMove(ev){
   if(px<VIEW.m.l||px>VIEW.m.l+VIEW.pw||py<VIEW.m.t||py>VIEW.m.t+VIEW.ph){hover=null; drawFrame(); return;}
   const x=VIEW.x0+(px-VIEW.m.l)/VIEW.pw*(VIEW.x1-VIEW.x0), y=VIEW.y1-(py-VIEW.m.t)/VIEW.ph*(VIEW.y1-VIEW.y0);
   hover={px,py}; const e=Eat(x,y);
-  const hv=LAMPS.map(L=>{const [h,v]=lampHV(L,x,y); return `<span>${L.name} H ${fmt(h,2)}° V ${fmt(v,2)}°</span>`;}).join("");
+  const groups=[...new Set(LAMPS.map(L=>L.group))];
+  const hv=groups.length>1
+    ? groups.map(g=>{const ls=LAMPS.filter(L=>L.group===g), eg=Eat(x,y,ls), nm=g===0?"Main":(S.pairs.find(p=>p.id===g)||{}).name||"Pair";
+        return `<span>${esc(nm)} ${fmt(eg,eg<10?2:1)} lx</span>`;}).join("")
+    : LAMPS.map(L=>{const [h,v]=lampHV(L,x,y); return `<span>${L.name} H ${fmt(h,2)}° V ${fmt(v,2)}°</span>`;}).join("");
   const side=Math.abs(y)<0.005?"axis":`${fmt(Math.abs(y),2)} m ${y>0?"L":"R"}`;
   $("#readout").innerHTML=`<span><b>${fmt(e,e<10?2:1)} lx</b></span><span>${fmt(x,1)} m, ${side}</span>${hv}`;
   drawFrame();
@@ -844,7 +893,7 @@ function renderResults(){
   const b=rawL.beam, side=y=>Math.abs(y)<0.005?"axis":`${fmt(Math.abs(y),1)} m ${y>0?"L":"R"}`;
   const axis=rows[0]?rows[0].last:[]; const t0=thr[0], t1=thr[thr.length-1];
   const wAt=wx.includes(20)?20:wx[0], wv=wAt!=null&&t0!=null?widthAt(wAt,t0,lim):null;
-  const sideHits=hits.map(h=>h.d===null?"—":fmt(h.d,0)).join(" / ");
+  const mainHits=hits.filter(h=>h.L.group===0), sideHits=mainHits.map(h=>h.d===null?"—":fmt(h.d,0)).join(" / ");
   $("#summary").innerHTML=
     kv("Customer checks",!S.reqs.length?"No checks":!nCh?"No limits set":nFail?`${nFail} of ${nCh} fail`:`Pass ${nCh}/${nCh}`,
        (S.reqsExample&&S.reqs.length?"example set, ":"")+(S.method==="hspr"?`vertical planes on road, ${S.evalH} m`:"road surface"),
@@ -852,9 +901,9 @@ function renderResults(){
     kv("Beam",b?esc(b.type+(b.side?" · "+b.side:"")):"—",esc(rawL.sample?"sample beam":rawL.name))+
     kv("E max",`${fmt(G.emax,G.emax<10?2:0)} lx`,`${fmt(G.ex,1)} m, ${side(G.ey)}`)+
     kv(`Reach ${t0??"–"} / ${t1??"–"} lx`,`${axis[0]==null?"—":fmt(axis[0],0)} / ${axis[axis.length-1]==null?"—":fmt(axis[axis.length-1],0)} m`,"along the vehicle axis")+
-    kv("Axis on road",`${sideHits} m`,LAMPS.map(h=>h.name).join(" / ")+" lamp")+
+    kv("Axis on road",`${sideHits||"—"} m`,(mainHits.map(h=>h.L.name).join(" / ")||"main")+" lamp"+(S.pairs.some(p=>p.on)?", main pair":""))+
     kv(`Width at ${wAt??"–"} m`,wv?`${fmt(wv[1]-wv[0],1)} m`:"—",t0!=null?`at ${t0} lx`:"")+
-    kv("Mounting",`${S.height} m`,`aim ${S.aim}${S.aimUnit==="pct"?" %":"°"}, pitch ${S.pitch}°`);
+    kv("Mounting",`${S.height} m`+(S.pairs.some(p=>p.on)?` +${S.pairs.filter(p=>p.on).length}`:""),S.pairs.some(p=>p.on)?`main pair, plus ${S.pairs.filter(p=>p.on).length} more`:`aim ${S.aim}${S.aimUnit==="pct"?" %":"°"}, pitch ${S.pitch}°`);
   $("#geomInfo").innerHTML=hits.map(h=>`${h.L.name}: pos (${fmt(h.L.px,3)}, ${fmt(h.L.py,3)}, ${fmt(h.L.pz,3)}) m · axis ${fmt(h.el,3)}°`).join("<br>");
 }
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -914,6 +963,24 @@ function beamChips(raw){
   if(used&&(used==="RHT"||used==="LHT")&&used!==S.side) html+=`<span class="chip warn">Road is ${S.side}</span>`;
   return html+`<div class="meta beamdetail">${b.detail.map(esc).join(" · ")}</div>`;
 }
+function renderPairs(){
+  const au=S.aimUnit==="pct"?"%":"°";
+  const num=(p,k,label,u,step,hint)=>`<label class="f">${label}<div class="inp"><input type="number" step="${step}" data-p="${p.id}" data-k="${k}" value="${p[k]}"><span class="u">${u}</span></div>${hint?`<small>${hint}</small>`:""}</label>`;
+  $("#pairList").innerHTML=S.pairs.map((p,i)=>{const raw=pairRaw[p.id], col=PAIR_COLORS[i%PAIR_COLORS.length];
+    return `<div class="pair${p.on?"":" off"}" data-id="${p.id}">
+      <div class="pair-h"><span class="swatch" style="background:${col}"></span>
+        <input type="text" data-p="${p.id}" data-k="name" value="${esc(p.name)}" aria-label="Pair name">
+        <label class="chk"><input type="checkbox" data-p="${p.id}" data-k="on" ${p.on?"checked":""}>On</label>
+        <button class="btn ghost" type="button" data-pdel="${p.id}" aria-label="Remove ${esc(p.name)}">✕</button></div>
+      <label class="drop" for="pf${p.id}"><input type="file" id="pf${p.id}" data-pfile="${p.id}" accept=".ies,.IES,.txt">
+        <span class="drop-t">${raw?esc(raw.name):"Uses the main beam"}</span><span class="drop-s">${raw?"drop another .ies to replace":"drop an .ies file for this pair"}</span></label>
+      ${raw?`<div class="beam">${beamChips(raw)}</div><div class="btnrow"><button class="btn ghost" type="button" data-pclear="${p.id}">Use the main beam instead</button></div>`:""}
+      <div class="err" data-perr="${p.id}" hidden></div>
+      <div class="row2">${num(p,"height","Mounting height","m",0.01)}${num(p,"sep","Lamp separation","m",0.01)}</div>
+      <div class="row2">${num(p,"x","Fore / aft","m",0.05,"+ ahead of main pair")}${num(p,"y","Lateral offset","m",0.05,"+ left")}</div>
+      <div class="row2">${num(p,"aim","Vertical aim",au,0.1,"− down")}${num(p,"toe","Toe","°",0.1,"+ outward")}</div>
+    </div>`;}).join("");
+}
 function renderInfo(){
   const meta=(raw,P)=>{if(!raw)return ""; const H=P.Hs,V=P.Vs; return `Type ${raw.ptype===2?"B":raw.ptype===3?"A":raw.ptype} · H ${fmt(H[0],1)}…${fmt(H[H.length-1],1)}° (${H.length}) · V ${fmt(V[0],1)}…${fmt(V[V.length-1],1)}° (${V.length})<br>peak ${Math.round(P.peak).toLocaleString()} cd at H ${fmt(P.pH,1)}°, V ${fmt(P.pV,2)}° · flux ${Math.round(flux(P,S.angleSys))} lm`;};
   $("#nameL").textContent=rawL.sample?"Sample beam loaded · drop an .ies file here":rawL.name; $("#metaL").innerHTML=meta(rawL,PL);
@@ -928,6 +995,8 @@ function renderInfo(){
   $("#hint-mount").textContent=`h ${S.height} m · aim ${S.aim}${S.aimUnit==="pct"?" %":"°"} · pitch ${S.pitch}°`;
   $("#hint-road").textContent=`${S.side} · ${S.laneW} m lanes · ${(S.markings||[]).length} lines`;
   $("#hint-plot").textContent=`0–${S.xmax} m · ${parseList(S.levels).length} levels`;
+  const onN=S.pairs.filter(p=>p.on).length;
+  $("#hint-pairs").textContent=!S.pairs.length?"none":`${S.pairs.length} pair${S.pairs.length>1?"s":""}${onN<S.pairs.length?`, ${onN} on`:""}`;
 }
 
 /* ------------------------------------------------------------------ main loop */
@@ -953,7 +1022,8 @@ NUM.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("input",()
   if(ROAD.has(k)){buildMarkings(); renderMarkings(); fitY();}
   schedule(true);});});
 SEL.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("change",()=>{
-  if(k==="aimUnit"&&el.value!==S.aimUnit){S.aim=+(el.value==="pct"?Math.tan(S.aim*D2R)*100:Math.atan(S.aim/100)/D2R).toFixed(3); $("#aim").value=S.aim;}
+  if(k==="aimUnit"&&el.value!==S.aimUnit){const cv2=a=>+(el.value==="pct"?Math.tan(a*D2R)*100:Math.atan(a/100)/D2R).toFixed(3);
+    S.aim=cv2(S.aim); $("#aim").value=S.aim; S.pairs.forEach(p=>p.aim=cv2(+p.aim||0)); S.aimUnit=el.value; renderPairs();}
   S[k]=el.value; if(ROAD.has(k)){buildMarkings(); renderMarkings();} fitY(); schedule(true);});});
 TXT.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("change",()=>{S[k]=el.value; schedule(true);});});
 CHK.forEach(k=>{const el=$("#"+k); el.checked=!!S[k]; el.addEventListener("change",()=>{S[k]=el.checked; schedule(true);});});
@@ -1005,6 +1075,7 @@ function reqRows(){
   const pass=rows.filter(r=>r[7]==="Pass").length, fail=rows.filter(r=>r[7]==="Fail").length;
   const meta=[["Beam",rawL.name+(rawR?" / "+rawR.name:"")],["Method",S.method==="hspr"?`Vertical planes on road, evaluation height ${S.evalH} m`:"Road surface (horizontal)"],
     ["Mounting",`h ${S.height} m, separation ${S.sep} m, aim ${S.aim} ${S.aimUnit==="pct"?"%":"°"}, toe ${S.toe}°, pitch ${S.pitch}°, roll ${S.roll}°`],
+    ...S.pairs.filter(p=>p.on).map(p=>[p.name,`${pairRaw[p.id]?pairRaw[p.id].name:"main beam"}; x ${p.x} m, lateral ${p.y} m, h ${p.height} m, separation ${p.sep} m, aim ${p.aim} ${S.aimUnit==="pct"?"%":"°"}, toe ${p.toe}°`]),
     ["Traffic side",S.side+(S.mirrorAll?" (beam mirrored)":"")],["Summary",`${pass} pass, ${fail} fail of ${rows.length}`],["Date",new Date().toISOString().slice(0,10)]];
   return {meta,head,rows};
 }
@@ -1029,6 +1100,27 @@ async function saveFile(name,data,type){
   a.download=name; document.body.appendChild(a); a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1000); toast("CSV download started");
 }
+
+// additional lamp pairs
+$("#addPair").addEventListener("click",()=>{S.pairs.push(newPair()); renderPairs(); schedule(true); $("#sec-pairs").open=true;});
+const pairById=id=>S.pairs.find(p=>p.id===+id);
+$("#pairList").addEventListener("input",e=>{const el=e.target, p=pairById(el.dataset.p); if(!p||el.type==="file")return; const k=el.dataset.k;
+  if(k==="name") p.name=el.value;
+  else if(k==="on"){p.on=el.checked; el.closest(".pair").classList.toggle("off",!p.on);}
+  else {const v=parseFloat(el.value); if(!Number.isFinite(v))return; p[k]=v;}
+  schedule(true);});
+$("#pairList").addEventListener("change",e=>{const el=e.target; if(!el.dataset.pfile)return; const p=pairById(el.dataset.pfile), f=el.files[0]; el.value=""; if(!p||!f)return;
+  const rd=new FileReader(); rd.onload=()=>{const err=loadPairText(p.id,String(rd.result),f.name);
+    if(err){const box=document.querySelector(`[data-perr="${p.id}"]`); box.textContent=err; box.hidden=false; return;}
+    p.file=f.name; renderPairs(); schedule(true); toast(`${p.name}: loaded ${f.name}`);}; rd.readAsText(f);});
+$("#pairList").addEventListener("click",e=>{const d=e.target.closest("[data-pdel]"), c=e.target.closest("[data-pclear]");
+  if(d){const id=+d.dataset.pdel; S.pairs=S.pairs.filter(p=>p.id!==id); delete pairRaw[id]; delete pairText[id]; renderPairs(); schedule(true);}
+  if(c){const id=+c.dataset.pclear; delete pairRaw[id]; delete pairText[id]; const p=pairById(id); if(p) delete p.file; renderPairs(); schedule(true);}});
+$("#pairList").addEventListener("dragover",e=>{const z=e.target.closest(".drop"); if(z){e.preventDefault(); z.classList.add("over");}});
+$("#pairList").addEventListener("dragleave",e=>{const z=e.target.closest(".drop"); if(z) z.classList.remove("over");});
+$("#pairList").addEventListener("drop",e=>{const z=e.target.closest(".drop"); if(!z)return; e.preventDefault(); z.classList.remove("over");
+  const inp=z.querySelector("input[type=file]"), f=e.dataTransfer.files[0]; if(!inp||!f)return;
+  const dt=new DataTransfer(); dt.items.add(f); inp.files=dt.files; inp.dispatchEvent(new Event("change",{bubbles:true}));});
 
 // files
 function handleFile(which,file){
@@ -1057,6 +1149,7 @@ function copy(text,msg){
 let tt=0; function toast(m){const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove("show"),2400);}
 
 new ResizeObserver(()=>schedule()).observe($(".cv"));
+renderPairs();
 for(const [id,v] of [["#mVert","hspr"],["#mRoad","road"]]) $(id).addEventListener("click",()=>{const sel=$("#method"); if(sel.value===v)return; sel.value=v; sel.dispatchEvent(new Event("change"));});
 $("#xmaxSel").addEventListener("change",e=>{if(e.target.value==="custom")return; S.xmax=+e.target.value; $("#xmax").value=S.xmax; schedule(true);});
 window.roadIlluminate={illuminance:(x,y)=>{buildLamps(); return Eat(x,y);}, state:S};
