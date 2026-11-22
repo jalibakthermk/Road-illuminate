@@ -182,6 +182,21 @@ th.num,td.num{text-align:right}
 tbody tr:last-child td{border-bottom:0}
 tbody tr:hover td{background:color-mix(in srgb,var(--sunk) 55%,transparent)}
 /* status: a pass is quiet, a fail is loud */
+.adbbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 14px;background:var(--plot-bg);color:var(--plot-ink);border-top:1px solid rgba(255,255,255,.07)}
+.adbbar .btn{padding:4px 10px;font-size:13.5px}
+.adbbar select{font:13px var(--f-body);width:auto;flex:0 0 auto}
+.adbbar input[type=range]{flex:1 1 160px;min-width:120px;width:auto}
+.adbbar .adbt{font:13px var(--f-mono);min-width:7.5em}
+.adbinfo{padding:8px 14px 10px;font-size:13.5px;line-height:1.5;border-top:1px solid var(--line)}
+.adbinfo .segs{display:flex;flex-wrap:wrap;gap:3px;align-items:center;margin:2px 0}
+.adbinfo .sg{display:inline-flex;flex-direction:column;align-items:center;min-width:26px;font:600 12px var(--f-mono);border:1px solid var(--line);border-radius:4px;padding:1px 3px;line-height:1.15}
+.adbinfo .sg small{font:400 10px var(--f-body);color:var(--muted)}
+.adbinfo .sg.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.adbinfo .sg.on small{color:var(--accent-ink)}
+.adbinfo .sg.off{text-decoration:line-through;color:var(--muted)}
+.adbinfo .lbl{font-weight:600;min-width:48px;color:var(--muted)}
+.adbinfo .tg{margin-top:4px}
+.adbinfo .res-f{color:var(--fail);font-weight:600}.adbinfo .res-p{color:var(--pass);font-weight:600}.adbinfo .res-n{color:var(--info)}
 .pill{display:inline-block;font:600 13px var(--f-body);border-radius:4px}
 .pill.p{color:var(--pass)}
 .pill.f{background:var(--fail);color:#fff;padding:1px 8px}
@@ -280,6 +295,20 @@ footer a:hover{color:var(--ink)}
   <select id="method" hidden aria-hidden="true" tabindex="-1"><option value="hspr">Vertical planes on road</option><option value="road">Road surface</option></select>
 
   <div class="secs">
+  <details class="sec" id="sec-adb">
+    <summary><span class="st">ADB scenario</span><span class="sv" id="hint-adb">none</span></summary>
+    <div class="sb">
+      <label class="drop" id="dropAdb" for="fileAdb">
+        <input type="file" id="fileAdb" accept=".json,application/json">
+        <span class="drop-t">Load adbSim road scenario</span>
+        <span class="drop-s" id="nameAdb">Export it in adbSim: Project and export, Road-illuminate scenario</span>
+      </label>
+      <div class="meta" id="metaAdb"></div>
+      <div class="err" id="errAdb" hidden></div>
+      <label class="chk"><input type="checkbox" id="adbShowTargets" checked>Show targets and glare points</label>
+      <div class="btnrow"><button class="btn ghost" id="adbOff" type="button" hidden>Unload scenario</button></div>
+    </div>
+  </details>
   <details class="sec" open id="sec-mount">
     <summary><span class="st">Mounting &amp; orientation</span><span class="sv" id="hint-mount"></span></summary>
     <div class="sb">
@@ -399,6 +428,13 @@ footer a:hover{color:var(--ink)}
     </div>
     <div class="cv"><canvas id="plot" aria-label="Bird's-eye isolux plot of the road"></canvas></div>
     <div class="foot"><div class="readout" id="readout"></div><div class="legend" id="legend"></div></div>
+    <div class="adbbar" id="adbBar" hidden>
+      <button class="btn" type="button" id="adbPlay">▶ Play</button>
+      <select id="adbRate" aria-label="Playback speed"><option value="0.1">×0.1</option><option value="0.25" selected>×0.25</option><option value="0.5">×0.5</option><option value="1">×1</option></select>
+      <input type="range" id="adbFrame" min="0" max="0" step="1" value="0" aria-label="Scenario frame">
+      <span class="adbt" id="adbTime"></span>
+    </div>
+    <div class="adbinfo" id="adbInfo" hidden></div>
   </section>
 
   <details class="screen fold" id="foldPerf" open>
@@ -572,7 +608,7 @@ const DEFAULT={
 let S=Object.assign({},DEFAULT);
 let rawL=null, rawR=null, textL=null, textR=null;
 try{const j=JSON.parse(localStorage.getItem(STORE)||"null"); if(j&&typeof j==="object"){const o=j.S||{}; if(o.aimUnit===undefined&&o.aim!==undefined) o.aimUnit="pct"; delete o.method; Object.assign(S,o); textL=j.textL||null; textR=j.textR||null;}}catch(e){}
-function save(){try{const o={S}; if(textL&&textL.length<1.5e6)o.textL=textL; if(textR&&textR.length<1.5e6)o.textR=textR;
+function save(){if(ADB.on) return; try{const o={S}; if(textL&&textL.length<1.5e6)o.textL=textL; if(textR&&textR.length<1.5e6)o.textR=textR;
   const pt={}; for(const pr of S.pairs){const t=pairText[pr.id]; if(!t)continue; const keep={};
     for(const k of ["L","R"]) if(t[k]&&t[k].length<1.5e6) keep[k]=t[k]; pt[pr.id]=keep;}
   o.pairTexts=pt; localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
@@ -626,10 +662,13 @@ let LAMPS=[], PL=null, PR=null;
 // prepared tables are cached per file and mirror state, so many lamp pairs stay quick
 const prepC=(raw,m)=>{raw._pc=raw._pc||{}; const k=m?"m":"n"; return raw._pc[k]||(raw._pc[k]=prepare(raw,m));};
 function buildLamps(){
+  if(ADB.on){PL=ADB.P.L; PR=ADB.P.R;}   // ADB scenario: low beam + weighted segments of the current frame
+  else {
   PL=prepC(rawL,S.mirrorAll);
   if(rawR) PR=prepC(rawR,S.mirrorAll);
   else if(S.mirrorRight) PR=prepC(rawL,!S.mirrorAll);
   else PR=PL;
+  }
   const R=mul(rotX(S.roll*D2R),rotNose(S.pitch*D2R));
   const piv=[S.pivot,0,0], hs=S.method==="hspr";
   LAMPS=[];
@@ -872,6 +911,7 @@ function drawBase(){
       c.fillStyle="#e6eef4"; c.fillText(tag,lx,ly);
     });
   }
+  drawAdbTargets(c);
   c.restore();
   // lamps
   for(const L of LAMPS){const px=X(Math.max(VIEW.x0,L.px)),py=Y(L.py); c.fillStyle=L.color||"#e6eef4"; c.beginPath(); c.moveTo(px,py-4.5);c.lineTo(px+8,py);c.lineTo(px,py+4.5);c.closePath();c.fill();}
@@ -944,6 +984,7 @@ function renderResults(){
     kv(`Reach ${t0??"–"} / ${t1??"–"} lx`,`${axis[0]==null?"—":fmt(axis[0],0)} / ${axis[axis.length-1]==null?"—":fmt(axis[axis.length-1],0)} m`,"along the vehicle axis")+
     kv("Axis on road",`${sideHits||"—"} m`,(mainHits.map(h=>h.L.name).join(" / ")||"main")+" lamp"+(S.pairs.some(p=>p.on)?", main pair":""))+
     kv(`Width at ${wAt??"–"} m`,wv?`${fmt(wv[1]-wv[0],1)} m`:"—",t0!=null?`at ${t0} lx`:"")+
+    (ADB.on?kv("ADB frame",`t ${fmt(ADB.sc.frames[ADB.k].t,2)} s`,`${["L","R"].map(k=>(ADB.sc.frames[ADB.k].weights[k]||[]).filter(w=>w<=0).length).join(" / ")} segments off (L / R)`):"")+
     kv("Mounting",`${S.height} m`+(S.pairs.some(p=>p.on)?` +${S.pairs.filter(p=>p.on).length}`:""),S.pairs.some(p=>p.on)?`main pair, plus ${S.pairs.filter(p=>p.on).length} more`:`aim ${S.aim}${S.aimUnit==="pct"?" %":"°"}, pitch ${S.pitch}°`);
   $("#geomInfo").innerHTML=hits.map(h=>`${h.L.name}: pos (${fmt(h.L.px,3)}, ${fmt(h.L.py,3)}, ${fmt(h.L.pz,3)}) m · axis ${fmt(h.el,3)}°`).join("<br>");
 }
@@ -1043,6 +1084,165 @@ function renderInfo(){
   $("#hint-plot").textContent=`0–${S.xmax} m · ${parseList(S.levels).length} levels`;
   const onN=S.pairs.filter(p=>p.on).length;
   $("#hint-pairs").textContent=!S.pairs.length?"none":`${S.pairs.length} pair${S.pairs.length>1?"s":""}${onN<S.pairs.length?`, ${onN} on`:""}`;
+}
+
+/* ------------------------------------------------------------------ ADB scenario from adbSim
+   A scenario file (format "adbsim-road-scenario") embeds the low beam and the ADB segments (or one high beam plus
+   segment boundaries) and a list of frames with each lamp's segment weights and the targets. Each lamp is rebuilt as
+   low beam + sum of w_i x segment_i on one table, so the plot, checks and readout below work unchanged.
+   Conventions match Road-illuminate: x forward, y left, z up; H right-positive, V up. */
+const ADB={on:false,name:"",sc:null,sides:null,k:0,P:null,prev:null,showTargets:true};
+const smooth01=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+const adbEdge=(h,b,soft)=>soft<=0?(h>=b?1:0):smooth01((h-b+soft/2)/soft);
+// the segment of a synthetic high beam between edges i and i+1 (masks sum to the whole high beam)
+const adbMask=(h,i,edges,soft)=>adbEdge(h,edges[i],soft)-adbEdge(h,edges[i+1],soft);
+function adbGrid(tables){
+  const t0=tables[0], same=tables.every(P=>P.Hs.length===t0.Hs.length&&P.Vs.length===t0.Vs.length&&
+    P.Hs.every((v,i)=>v===t0.Hs[i])&&P.Vs.every((v,i)=>v===t0.Vs[i]));
+  if(same) return {Hs:t0.Hs,Vs:t0.Vs,same:true};
+  let h0=Infinity,h1=-Infinity,v0=Infinity,v1=-Infinity,st=Infinity;
+  const minStep=a=>{let m=Infinity; for(let i=1;i<a.length;i++) m=Math.min(m,a[i]-a[i-1]); return m;};
+  for(const P of tables){h0=Math.min(h0,P.Hs[0]); h1=Math.max(h1,P.Hs[P.Hs.length-1]); v0=Math.min(v0,P.Vs[0]); v1=Math.max(v1,P.Vs[P.Vs.length-1]);
+    st=Math.min(st,minStep(P.Hs),minStep(P.Vs));}
+  h0=Math.max(h0,-60); h1=Math.min(h1,60); v0=Math.max(v0,-30); v1=Math.min(v1,30);
+  let step=Math.max(0.05,Number.isFinite(st)?st:0.1);
+  while(((h1-h0)/step+1)*((v1-v0)/step+1)>6e5) step*=1.25;   // keep each table below ~600k cells
+  const rng=(a,b)=>{const n=Math.floor((b-a)/step+1e-9)+1; return Float64Array.from({length:n},(_,i)=>+(a+i*step).toFixed(6));};
+  return {Hs:rng(h0,h1),Vs:rng(v0,v1),same:false};
+}
+function adbResample(P,G){
+  if(G.same) return Float32Array.from(P.cd);
+  const nv=G.Vs.length, out=new Float32Array(G.Hs.length*nv);
+  for(let a=0;a<G.Hs.length;a++) for(let b=0;b<nv;b++) out[a*nv+b]=intensity(P,G.Hs[a],G.Vs[b]);
+  return out;
+}
+function adbSide(ph,k,mirror,cache){
+  const pick=o=>o?(o[k]||o.L):null;
+  const parse=(f,lab)=>{if(!f) return null; if(cache.has(f)) return cache.get(f);
+    let raw; try{raw=parseIES(f.ies,f.name);}catch(e){throw new Error(`${lab} (${f.name}): ${e.message}`);}
+    const v={raw,P:prepare(raw,mirror)}; cache.set(f,v); return v;};
+  const low=parse(pick(ph.lowBeam),"Low beam");
+  let segTabs, hb=null;
+  if(ph.mode==="synthetic"){hb=parse(pick(ph.highBeam),"High beam"); if(!hb) throw new Error("The scenario has no high-beam file.");
+    if(!Array.isArray(ph.edges)||ph.edges.length<2) throw new Error("The scenario has no segment boundaries.");}
+  else {segTabs=(pick(ph.segments)||[]).map((f,i)=>parse(f,`Segment ${i+1}`)); if(!segTabs.length) throw new Error("The scenario has no segment files.");}
+  const tables=[low,hb,...(segTabs||[])].filter(Boolean).map(x=>x.P);
+  const G=adbGrid(tables), nv=G.Vs.length;
+  const base=low?adbResample(low.P,G):new Float32Array(G.Hs.length*nv);
+  let segs;
+  if(hb){const hg=adbResample(hb.P,G), soft=+ph.softEdge_deg||0;
+    segs=ph.edges.slice(0,-1).map((_,i)=>{const out=new Float32Array(hg.length);
+      for(let a=0;a<G.Hs.length;a++){const m=adbMask(G.Hs[a],i,ph.edges,soft); if(!m) continue; for(let b=0;b<nv;b++) out[a*nv+b]=hg[a*nv+b]*m;}
+      return out;});}
+  else segs=segTabs.map(x=>adbResample(x.P,G));
+  return {G,base,segs,lowRaw:low?low.raw:null,key:[pick(ph.lowBeam),pick(ph.highBeam),...(pick(ph.segments)||[])]};
+}
+function adbCompose(){
+  const fr=ADB.sc.frames[ADB.k], out={};
+  for(const k of ["L","R"]){const sd=ADB.sides[k], w=fr.weights[k]||[], nv=sd.G.Vs.length;
+    const cd=Float32Array.from(sd.base);
+    sd.segs.forEach((g,i)=>{const x=Math.max(0,Math.min(1,+(w[i]??1)||0)); if(!x) return; for(let p=0;p<cd.length;p++) cd[p]+=x*g[p];});
+    let peak=0,pi=0; for(let p=0;p<cd.length;p++) if(cd[p]>peak){peak=cd[p]; pi=p;}
+    out[k]={Hs:sd.G.Hs,Vs:sd.G.Vs,cd,nv,peak,pH:sd.G.Hs[Math.floor(pi/nv)],pV:sd.G.Vs[pi%nv]};}
+  ADB.P=out;
+}
+const ADB_KEYS=["method","evalH","aimUnit","height","sep","aim","toe","pitch","roll","angleSys","only","mirrorRight","mirrorAll","side","laneW","ownN","oppN","vehLane","laneOff","xmax","yfit"];
+function adbLoad(text,name){
+  const o=JSON.parse(text);
+  if(!o||o.format!=="adbsim-road-scenario") throw new Error("This is not an adbSim road scenario (format \"adbsim-road-scenario\").");
+  if((o.formatVersion|0)>1) throw new Error(`Scenario format ${o.formatVersion} is newer than this version of Road Illuminate.`);
+  if(!Array.isArray(o.frames)||!o.frames.length) throw new Error("The scenario has no frames.");
+  const ph=o.photometry||{}, mirror=ph.fileHPlusRight===false, cache=new Map();
+  const L=adbSide(ph,"L",mirror,cache);
+  const sameR=!(ph.lowBeam&&ph.lowBeam.R)&&!(ph.highBeam&&ph.highBeam.R)&&!(ph.segments&&ph.segments.R);
+  const R=sameR?L:adbSide(ph,"R",mirror,cache);
+  for(const [k,sd] of [["L",L],["R",R]]){const n=sd.segs.length, bad=o.frames.findIndex(f=>!f.weights||!Array.isArray(f.weights[k])||f.weights[k].length!==n);
+    if(bad>=0) throw new Error(`Frame ${bad+1}: the ${k==="L"?"left":"right"} lamp needs ${n} segment weights.`);}
+  if(!ADB.on) ADB.prev={S:Object.fromEntries(ADB_KEYS.map(k=>[k,S[k]])),markings:S.markings,rawL,rawR};
+  Object.assign(ADB,{on:true,name,sc:o,sides:{L,R},k:0});
+  // mounting, road and evaluation as in adbSim; the beam files are already mirrored to H right-positive
+  const m=o.mounting||{}, rd=o.road||{}, ev=o.evaluation||{};
+  Object.assign(S,{method:ev.method==="road"?"road":"hspr",evalH:+ev.evalHeight||0,aimUnit:"deg",height:+m.height||S.height,sep:+m.separation||0,
+    aim:+m.aimV_deg||0,toe:0,pitch:0,roll:0,angleSys:ph.angleSystem==="elaz"?"elaz":"azel",only:"both",mirrorRight:false,mirrorAll:false,
+    side:rd.traffic==="LHT"?"LHT":"RHT",laneW:+rd.laneWidth||S.laneW,ownN:Math.max(1,rd.lanesPerDir|0),oppN:Math.max(1,rd.lanesPerDir|0),vehLane:1,laneOff:0,
+    xmax:+ev.xMax||S.xmax,yfit:"road"});
+  rawL=L.lowRaw||rawL; rawL=Object.assign(Object.create(Object.getPrototypeOf(rawL)),rawL,{name:`adbSim scenario: ${name}`}); rawR=null;
+  if(!rawL.beam) rawL.beam=classifyBeam(rawL);
+  adbCompose(); buildMarkings(); renderMarkings(); fitY(); adbSyncControls(); adbUI();
+  $("#sec-adb").open=true;
+}
+function adbUnload(){
+  if(!ADB.on) return;
+  const pv=ADB.prev; Object.assign(S,pv.S); S.markings=pv.markings; rawL=pv.rawL; rawR=pv.rawR;
+  adbStop(); Object.assign(ADB,{on:false,sc:null,sides:null,P:null,prev:null});
+  renderMarkings(); adbSyncControls(); adbUI(); schedule(true); toast("ADB scenario unloaded");
+}
+function adbSyncControls(){
+  NUM.forEach(k=>{$("#"+k).value=S[k];}); SEL.forEach(k=>{$("#"+k).value=S[k];}); CHK.forEach(k=>{$("#"+k).checked=!!S[k];});
+  const xs=$("#xmaxSel"); xs.value=[100,150,250,400].includes(+S.xmax)?String(S.xmax):"custom";
+  for(const id of ["fileL","fileR","mirrorRight","mirrorAll","angleSys","only"]) $("#"+id).disabled=ADB.on;
+  for(const id of ["#dropL","#dropR"]) $(id).style.opacity=ADB.on?0.5:"";
+  for(const [id,v] of [["#mVert","hspr"],["#mRoad","road"]]) $(id).setAttribute("aria-pressed",String(S.method===v));
+}
+function adbUI(){
+  $("#adbBar").hidden=!ADB.on; $("#adbInfo").hidden=!ADB.on; $("#adbOff").hidden=!ADB.on;
+  if(!ADB.on){$("#hint-adb").textContent="none"; $("#nameAdb").textContent="Export it in adbSim: Project and export, Road-illuminate scenario"; $("#metaAdb").innerHTML=""; return;}
+  const o=ADB.sc, ph=o.photometry, n=ADB.sides.L.segs.length, fr=o.frames;
+  $("#hint-adb").textContent=`${n} segments · ${fr.length} frame${fr.length>1?"s":""}`;
+  $("#nameAdb").textContent=ADB.name;
+  const notes=[];
+  if(Math.abs(+(o.mounting||{}).aimH_deg||0)>1e-9) notes.push(`horizontal aim ${o.mounting.aimH_deg}° not applied (Road Illuminate has toe only)`);
+  if(S.pairs.some(p=>p.on)) notes.push("extra lamp pairs are on and add their light");
+  $("#metaAdb").innerHTML=[`${esc(o.generator||"adbSim")} · ${ph.mode==="synthetic"?`high beam + ${n} boundaries-based segments`:`${n} segment files`} per lamp`,
+    `${ADB.sides.R===ADB.sides.L?"right lamp uses the left files":"separate right-lamp files"} · ${ph.angleSystem} · table ${ADB.sides.L.G.Hs.length}×${ADB.sides.L.G.Vs.length}`,
+    `controller: margin ${o.controller?.marginH_deg??"?"}°/${o.controller?.marginV_deg??"?"}°, latency ${o.controller?.latency_ms??0} ms${o.dynamic?", moving targets":", static scene"}`,
+    ...notes.map(t=>`<span style="color:var(--warn)">${esc(t)}</span>`)].join("<br>");
+  const sl=$("#adbFrame"); sl.max=fr.length-1; sl.value=ADB.k; sl.disabled=fr.length<2; $("#adbPlay").disabled=fr.length<2;
+  adbInfo();
+}
+const adbRes=r=>r==="fail"?'<span class="res-f">✗ Fail</span>':r==="pass"?'<span class="res-p">✓ Pass</span>':'<span class="res-n">– No limit</span>';
+function adbInfo(){
+  if(!ADB.on) return;
+  const fr=ADB.sc.frames[ADB.k], N=ADB.sc.frames.length;
+  $("#adbTime").textContent=`t ${fmt(fr.t,2)} s · ${ADB.k+1}/${N}`;
+  const segRow=k=>{const w=fr.weights[k]||[]; return `<div class="segs"><span class="lbl">${k==="L"?"Left":"Right"}</span>${w.map((x,i)=>
+    `<span class="sg ${x>=1?"on":x<=0?"off":"dim"}" title="Segment ${i+1}: ${x>=1?"on":x<=0?"off":Math.round(x*100)+" %"}">${i+1}<small>${x>=1?"on":x<=0?"off":Math.round(x*100)+"%"}</small></span>`).join("")}</div>`;};
+  const tg=fr.targets.map(t=>`<div class="tg"><b>T${t.n} · ${esc(t.label)}</b> at ${fmt(t.d,1)} m${t.detected?"":" (not detected)"}: `+
+    t.points.map(p=>`${esc(p.label)} ${p.E_lx==null?"—":fmt(p.E_lx,p.E_lx<1?3:1)} lx${p.E_max_lx!=null?` (limit ${p.E_max_lx})`:""} ${adbRes(p.result)}`).join(" · ")+`</div>`).join("");
+  $("#adbInfo").innerHTML=`<div>Kept flux ${fr.keptFlux==null?"—":fmt(100*fr.keptFlux,1)+" %"}${fr.fallback?` · low-beam fallback (${esc(fr.fallback)})`:""} · segments, 1 = leftmost file order</div>`+
+    segRow("L")+segRow("R")+tg;
+}
+function adbSetFrame(k){
+  if(!ADB.on) return; k=Math.max(0,Math.min(ADB.sc.frames.length-1,k|0)); if(k===ADB.k) return;
+  ADB.k=k; $("#adbFrame").value=k; adbCompose(); adbInfo(); schedule();
+}
+let adbPlaying=null;
+function adbStop(){if(adbPlaying){cancelAnimationFrame(adbPlaying.raf); adbPlaying=null;} $("#adbPlay").textContent="▶ Play";}
+function adbTogglePlay(){
+  if(adbPlaying){adbStop(); return;}
+  const fr=ADB.sc.frames; if(fr.length<2) return;
+  if(ADB.k>=fr.length-1) adbSetFrame(0);
+  adbPlaying={t:fr[ADB.k].t,last:performance.now()}; $("#adbPlay").textContent="❚❚ Pause";
+  const tick=now=>{if(!adbPlaying) return;
+    adbPlaying.t+=(now-adbPlaying.last)/1000*parseFloat($("#adbRate").value); adbPlaying.last=now;
+    let k=ADB.k; while(k+1<fr.length&&fr[k+1].t<=adbPlaying.t) k++;
+    adbSetFrame(k);
+    if(k>=fr.length-1){adbStop(); return;}
+    adbPlaying.raf=requestAnimationFrame(tick);};
+  adbPlaying.raf=requestAnimationFrame(tick);
+}
+// targets on the plot: outline to scale, number, glare points (✗ where a limit fails)
+function drawAdbTargets(c){
+  if(!ADB.on||!ADB.showTargets) return;
+  const fr=ADB.sc.frames[ADB.k];
+  c.font="600 11px "+css("--f-body"); c.textBaseline="bottom"; c.textAlign="left";
+  for(const t of fr.targets){const o=t.outline; if(o.x1<VIEW.x0||o.x0>VIEW.x1) continue;
+    const a=X(o.x0), b=X(o.x1), top=Y(o.y1), bot=Y(o.y0);
+    c.fillStyle="rgba(240,244,248,0.9)"; c.fillRect(a,top,Math.max(2,b-a),Math.max(2,bot-top));
+    if(!t.detected){c.setLineDash([3,2]); c.strokeStyle="#ffd24a"; c.lineWidth=1; c.strokeRect(a,top,Math.max(2,b-a),Math.max(2,bot-top)); c.setLineDash([]);}
+    const tag=`T${t.n}`; c.lineWidth=3; c.strokeStyle="rgba(13,21,29,0.85)"; c.strokeText(tag,a,top-2); c.fillStyle="#ffd24a"; c.fillText(tag,a,top-2);
+    for(const p of t.points){const px=X(p.x), py=Y(p.y); c.beginPath(); c.arc(px,py,2.6,0,7); c.fillStyle=p.result==="fail"?"#ff5a4f":"#0d151d"; c.fill();
+      if(p.result==="fail"){c.fillStyle="#ff5a4f"; c.fillText("✗",px+3,py-2);}}}
 }
 
 /* ------------------------------------------------------------------ main loop */
@@ -1198,11 +1398,26 @@ function copy(text,msg){
 }
 let tt=0; function toast(m){const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove("show"),2400);}
 
+// ADB scenario
+function adbFile(file){if(!file) return; const rd=new FileReader();
+  rd.onload=()=>{const err=$("#errAdb"); try{adbLoad(String(rd.result),file.name); err.hidden=true; schedule(true); toast(`Loaded ADB scenario ${file.name}`);}
+    catch(e){err.textContent=e.message; err.hidden=false;}};
+  rd.readAsText(file);}
+$("#fileAdb").addEventListener("change",e=>{adbFile(e.target.files[0]); e.target.value="";});
+{const z=$("#dropAdb"); z.addEventListener("dragover",e=>{e.preventDefault(); z.classList.add("over");});
+  z.addEventListener("dragleave",()=>z.classList.remove("over"));
+  z.addEventListener("drop",e=>{e.preventDefault(); z.classList.remove("over"); adbFile(e.dataTransfer.files[0]);});}
+$("#adbOff").addEventListener("click",adbUnload);
+$("#adbShowTargets").addEventListener("change",e=>{ADB.showTargets=e.target.checked; schedule();});
+$("#adbFrame").addEventListener("input",e=>{adbStop(); adbSetFrame(+e.target.value);});
+$("#adbPlay").addEventListener("click",adbTogglePlay);
+
 new ResizeObserver(()=>schedule()).observe($(".cv"));
 renderPairs();
 for(const [id,v] of [["#mVert","hspr"],["#mRoad","road"]]) $(id).addEventListener("click",()=>{const sel=$("#method"); if(sel.value===v)return; sel.value=v; sel.dispatchEvent(new Event("change"));});
 $("#xmaxSel").addEventListener("change",e=>{if(e.target.value==="custom")return; S.xmax=+e.target.value; $("#xmax").value=S.xmax; schedule(true);});
-window.roadIlluminate={illuminance:(x,y)=>{buildLamps(); return Eat(x,y);}, state:S};
+window.roadIlluminate={illuminance:(x,y)=>{buildLamps(); return Eat(x,y);}, state:S,
+  adb:{load:(text,name)=>{adbLoad(text,name||"scenario.json"); schedule(true);}, frame:k=>adbSetFrame(k), unload:()=>adbUnload(), get on(){return ADB.on;}}};
 renderMarkings(); fitY();
 schedule(true);
 })();

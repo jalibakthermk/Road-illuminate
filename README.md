@@ -32,6 +32,18 @@ The web tool (`index.html`, with an identical copy in `docs/index.html` so GitHu
 
 It opens with a synthetic sample beam so it works straight away. The sections below describe the Python script.
 
+### ADB scenario from adbSim
+
+[adbSim](https://jalibakthermk.github.io/adbSim/) (ADB / matrix beam simulator) exports a **Road-illuminate scenario** file (Project and export → Road-illuminate scenario). Load it in the web tool under **ADB scenario** to see the ADB beam on the road:
+
+- The file embeds the low beam and the ADB segments (one IES file per segment, or one high beam plus segment boundaries and a soft edge), for the left and right lamp.
+- Each frame holds both lamps' segment weights (0 = off … 1 = on) and the targets. Each lamp is rebuilt as low beam + Σ wᵢ · segmentᵢ, so the isolux plot, road performance, customer checks and pointer readout all show the ADB beam of that frame.
+- Targets are drawn to scale with their glare points (T1, T2, …). Below the plot, the segment states of each lamp and the illuminance at each glare point (with the adbSim limit result) are listed for the frame.
+- A static adbSim scene gives one frame. With moving targets the file carries the timeline: use the slider or Play to step through it.
+- Loading a scenario sets the mounting height, lamp separation, vertical aim, angle system, road layout, method and distance range from the file. Horizontal aim from adbSim is not applied (Road-illuminate has toe only). Unload the scenario to return to your own IES files and settings.
+
+Both tools use the same frame (x forward, y left, z up; H right-positive, V up). With the vertical planes method, Road-illuminate snaps H and V to the 0.05° HSPR grid, so values next to a sharp cut-off can differ from adbSim's road view by the effect of that snap; elsewhere they agree.
+
 ## Illuminance method
 
 Two methods are available, in both the script (`--method vertical` or `--method road`) and the web tool.
@@ -353,6 +365,7 @@ The flux in the file is found by integrating I over the measured range. The soli
 
 | Date | Change |
 | --- | --- |
+| 2026-11-22 | Web tool: load an ADB scenario exported by adbSim. Each lamp becomes low beam + weighted ADB segments per frame; targets and glare points are drawn on the plot; frame slider and playback for moving targets. |
 | 2026-11-17 | Web tool: each additional lamp pair can take separate left and right IES files. New customer check `maxrange`: the farthest distance an isolux line reaches at any lateral position within a chosen window. |
 | 2026-11-17 | Web tool: additional lamp pairs are now shown as tabs, with a + button to add a pair. |
 | 2026-11-17 | Web tool: additional lamp pairs (fog lamps, auxiliary or truck lamps), each with its own IES file or the main beam, mounting height, separation, fore/aft and lateral position, aim and toe. The illuminance of all pairs is added; the hover readout shows each pair's share. |
