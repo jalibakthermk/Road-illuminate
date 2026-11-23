@@ -5,68 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Headlamp road illuminance from IES H-V photometry with the vertical planes on road (HSPR) method: mounting height, aim, toe, pitch and roll, lane markings and customer requirement checks.">
 <style>
-:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}
+body{margin:0}
 img{max-width:100%}
 [hidden]{display:none!important}
 </style>
 <title>Road Illuminate</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"%3E%3Cdefs%3E%3CclipPath id="t"%3E%3Crect width="48" height="48" rx="11"/%3E%3C/clipPath%3E%3C/defs%3E%0A%3Cg clip-path="url%28%23t%29"%3E%3Crect width="48" height="48" fill="%230c1016"/%3E%0A%3Cpath d="M7 48V0M41 48V0" stroke="%233a4450" stroke-width="1"/%3E%3Cpath d="M24 48V0" stroke="%23c9a640" stroke-width="1" stroke-dasharray="3 3"/%3E%0A%3Cpath d="M32 48C6 46 4 34 12 22L22 18L36 2C46 10 48 38 32 48Z" fill="%231d63b8"/%3E%0A%3Cpath d="M32 48C11 45 9 35 15 26L23 23L35 10C43 17 44 38 32 48Z" fill="%2317a6a8"/%3E%0A%3Cpath d="M32 48C15 45 14 36 18 30L24 28L34 18C40 24 40 39 32 48Z" fill="%234cbf55"/%3E%0A%3Cpath d="M32 48C19 45 18 38 21 34L26 32L33 26C37 31 37 41 32 48Z" fill="%23e2d42e"/%3E%0A%3Cellipse cx="30.5" cy="40" rx="6" ry="4.2" fill="%23f28c1a"/%3E%0A%3Cellipse cx="31" cy="39.6" rx="2.8" ry="2" fill="%23e8402a"/%3E%0A%3C/g%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Semi+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<meta name="theme-color" content="#0a0f2c">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- beamKit: shared design framework for the lighting tools (https://jalibakthermk.github.io/beamkit/) -->
+<link rel="stylesheet" href="https://jalibakthermk.github.io/beamkit/beamkit.css">
+<script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<script src="https://jalibakthermk.github.io/beamkit/beamkit.js" defer></script>
 <style>
 /* Bench layout (shared with beamSynth): a control rail that stays in view, results on the right read
    top-down as summary, road plot, road performance, customer checks. Dark panels are the plot only. */
+/* Colour and font names mapped onto the shared beamKit tokens (light and dark come from beamkit.css).
+   Fallback values keep the page usable if beamkit.css cannot load (e.g. offline). */
 :root{
-  --bg:#f3f5f6; --surface:#ffffff; --sunk:#e9edf0; --ink:#15212b; --muted:#55656f; --line:#d5dce1; --line-soft:#e6ebee;
-  --accent:#9a5600; --accent-ink:#ffffff; --accent-soft:#f7e9d3;
-  --pass:#1f7a45; --fail:#c0332a; --info:#6b7b88; --warn:#8a5a00;
+  --bg:var(--cds-background,#f2f4f8); --surface:var(--cds-layer-01,#fff); --sunk:var(--cds-layer-02,#e8ebf1);
+  --ink:var(--cds-text-primary,#161616); --muted:var(--cds-text-secondary,#525a66);
+  --line:var(--cds-border-subtle,#d5d9e0); --line-soft:var(--cds-grid,#e4e7ec);
+  --accent:var(--cds-button-primary,#0f62fe); --accent-ink:#ffffff; --accent-soft:var(--cds-info-bg,#edf5ff);
+  --pass:var(--cds-ok,#24a148); --fail:var(--cds-bad,#da1e28); --good:var(--cds-ok,#24a148); --bad:var(--cds-bad,#da1e28);
+  --info:var(--cds-text-helper,#6f7682); --warn:var(--cds-warn-text,#8e6a00);
+  --f-display:var(--font-display,"Arial Narrow",sans-serif);
+  --f-body:var(--font-body,"Segoe UI",system-ui,sans-serif);
+  --f-mono:var(--font-mono,ui-monospace,monospace);
   --plot-bg:#0d151d; --plot-ink:#c7d4de; --plot-dim:#8494a1; --plot-grid:rgba(199,212,222,.13); --plot-axis:rgba(199,212,222,.45);
-  --f-display:"Saira Semi Condensed","Arial Narrow",sans-serif;
-  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
-  --f-mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0b1117; --surface:#121b23; --sunk:#0c141b; --ink:#e3e9ee; --muted:#93a3af; --line:#25343f; --line-soft:#1b2832;
-  --accent:#f0a43a; --accent-ink:#1b1206; --accent-soft:#33260f;
-  --pass:#4cc27a; --fail:#ff6b5d; --info:#8c9daa; --warn:#e8c25a; color-scheme:dark;}}
-:root[data-theme="dark"]{
-  --bg:#0b1117; --surface:#121b23; --sunk:#0c141b; --ink:#e3e9ee; --muted:#93a3af; --line:#25343f; --line-soft:#1b2832;
-  --accent:#f0a43a; --accent-ink:#1b1206; --accent-soft:#33260f;
-  --pass:#4cc27a; --fail:#ff6b5d; --info:#8c9daa; --warn:#e8c25a; color-scheme:dark;}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{background:var(--bg);color:var(--ink)}
-body{font-family:var(--f-body);font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 40px}
-.wrap{max-width:1440px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+body{font-family:var(--f-body);font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums}
 .bench{display:grid;grid-template-columns:372px minmax(0,1fr);gap:20px;align-items:start}
 h1,h2{text-wrap:balance}
 
 /* ---- control rail ---- */
-aside{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-width:0;display:flex;flex-direction:column;
+aside{background:var(--surface);border:1px solid var(--line);border-radius:0;min-width:0;display:flex;flex-direction:column;
   position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:hidden}
-aside header{padding:12px 14px;border-bottom:1px solid var(--line)}
-h1{font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:.01em;margin:0;line-height:1}
 .brand{display:flex;align-items:center;gap:10px}
 .logo{width:32px;height:32px;flex:none}
 .rail-body{overflow-y:auto;overscroll-behavior:contain;padding:14px 14px 10px;display:flex;flex-direction:column;gap:14px;min-height:0}
-.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--sunk);border-radius:7px;padding:3px;gap:3px}
-.seg button{font:600 13.5px var(--f-body);border:0;border-radius:5px;padding:8px 4px;background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--sunk);border-radius:0;padding:3px;gap:3px}
+.seg button{font:600 13.5px var(--f-body);border:0;border-radius:0;padding:8px 4px;background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap}
 .seg button:hover{color:var(--ink)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 label.f,div.f{display:flex;flex-direction:column;gap:4px;font-size:13.5px;color:var(--muted);min-width:0}
 label.f small{font-size:12.5px;color:var(--muted)}
-input,select,textarea{font:15px var(--f-body);font-variant-numeric:tabular-nums;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:7px 9px;width:100%;min-width:0}
+input,select,textarea{font:15px var(--f-body);font-variant-numeric:tabular-nums;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:0;padding:7px 9px;width:100%;min-width:0}
 input:hover,select:hover,textarea:hover{border-color:var(--muted)}
 input:disabled{opacity:.5}
 textarea{font:12px/1.5 var(--f-mono);resize:vertical;white-space:pre;overflow:auto;tab-size:2;background:var(--sunk);min-height:150px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .mono{font-family:var(--f-mono);font-size:13px}
 .btnrow{display:flex;flex-wrap:wrap;gap:6px}
-.btn{font:600 14px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:5px;padding:7px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;position:relative;white-space:nowrap}
+.btn{font:600 14px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:0;padding:7px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;position:relative;white-space:nowrap}
 .btn:hover{border-color:var(--muted)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .btn.primary:hover{filter:brightness(1.08)}
@@ -75,7 +71,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .btn.link{color:var(--accent);border-color:var(--accent)}
 .btn.link:hover{background:var(--accent-soft)}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
-.drop{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;border:1.5px dashed var(--line);border-radius:7px;padding:12px 10px;cursor:pointer;background:var(--sunk);text-align:center}
+.drop{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;border:1.5px dashed var(--line);border-radius:0;padding:12px 10px;cursor:pointer;background:var(--sunk);text-align:center}
 .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
 .drop:focus-within{outline:2px solid var(--accent);outline-offset:1px}
 .drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
@@ -109,14 +105,14 @@ details.sec[open] .sv{visibility:hidden}
 .mk-list{display:flex;flex-direction:column;gap:8px}
 .pair-list{display:flex;flex-direction:column;gap:12px}
 .ptabs{display:flex;align-items:flex-end;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:thin}
-.ptab{display:flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid transparent;border-bottom:0;border-radius:7px 7px 0 0;background:none;color:var(--muted);font:inherit;font-size:13.5px;white-space:nowrap;cursor:pointer;margin-bottom:-1px}
+.ptab{display:flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid transparent;border-bottom:0;border-radius:0;background:none;color:var(--muted);font:inherit;font-size:13.5px;white-space:nowrap;cursor:pointer;margin-bottom:-1px}
 .ptab:hover{color:var(--ink)}
 .ptab[aria-selected=true]{background:var(--surface);border-color:var(--line);color:var(--ink);font-weight:600}
 .ptab.off{opacity:.55}
 .ptab.add{padding:7px 10px;font-size:17px;line-height:1;font-weight:500}
 .pair-empty{font-size:13.5px;color:var(--muted)}
 .pair-list:empty{display:none}
-.pair{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:9px;background:var(--surface)}
+.pair{border:1px solid var(--line);border-radius:0;padding:10px;display:flex;flex-direction:column;gap:9px;background:var(--surface)}
 .pair.off{opacity:.6}
 .pair-h{display:flex;align-items:center;gap:8px}
 .pair-h input[type=text]{font-weight:600}
@@ -126,7 +122,7 @@ details.sec[open] .sv{visibility:hidden}
 .pdrop .beam .beamdetail{display:none}
 .pdrop .btn.ghost{align-self:flex-start;font-size:13px}
 .pair .drop-t{font-size:13.5px}
-.swatch{width:10px;height:10px;border-radius:2px;flex:none}
+.swatch{width:10px;height:10px;border-radius:0;flex:none}
 .mk{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:4px 6px;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line-soft)}
 .mk .nm{grid-column:1/4}
 .mk input,.mk select{padding:5px 7px;font-size:14px}
@@ -136,7 +132,7 @@ details.sec[open] .sv{visibility:hidden}
 
 /* ---- results ---- */
 main{display:flex;flex-direction:column;gap:20px;min-width:0}
-.summary{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.summary{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));background:var(--surface);border:1px solid var(--line);border-radius:0;overflow:hidden}
 .kv{grid-column:span 2;padding:11px 14px 12px;min-width:0;border-right:1px solid var(--line-soft);border-top:1px solid var(--line-soft);margin:-1px -1px 0 0}
 .kv b{display:block;font:400 13px var(--f-body);color:var(--muted)}
 .kv span{display:block;font:600 21px/1.25 var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -146,7 +142,7 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .kv.verdict.ok::before{background:var(--pass)} .kv.verdict.bad::before{background:var(--fail)}
 .kv.verdict span{font-size:27px;line-height:1.15}
 .kv.verdict.ok span{color:var(--pass)} .kv.verdict.bad span{color:var(--fail)}
-.screen{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;min-width:0}
+.screen{background:var(--surface);border:1px solid var(--line);border-radius:0;overflow:hidden;min-width:0}
 .bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .bar h2{font:600 18px var(--f-display);margin:0 auto 0 0;letter-spacing:.01em}
 .bar label{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--muted)}
@@ -159,7 +155,7 @@ main{display:flex;flex-direction:column;gap:20px;min-width:0}
 .readout{font-size:13.5px;min-height:1.4em;display:flex;flex-wrap:wrap;gap:2px 14px}
 .readout b{font-weight:600;color:#eef3f7}
 .legend{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--plot-dim)}
-.legend i{display:inline-block;width:12px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.legend i{display:inline-block;width:12px;height:9px;border-radius:0;margin-right:4px;vertical-align:-1px}
 details.fold>summary{list-style:none;cursor:pointer;user-select:none}
 details.fold>summary::-webkit-details-marker{display:none}
 details.fold:not([open])>summary{border-bottom:0}
@@ -189,7 +185,7 @@ tbody tr:hover td{background:color-mix(in srgb,var(--sunk) 55%,transparent)}
 .adbbar .adbt{font:13px var(--f-mono);min-width:7.5em}
 .adbinfo{padding:8px 14px 10px;font-size:13.5px;line-height:1.5;border-top:1px solid var(--line)}
 .adbinfo .segs{display:flex;flex-wrap:wrap;gap:3px;align-items:center;margin:2px 0}
-.adbinfo .sg{display:inline-flex;flex-direction:column;align-items:center;min-width:26px;font:600 12px var(--f-mono);border:1px solid var(--line);border-radius:4px;padding:1px 3px;line-height:1.15}
+.adbinfo .sg{display:inline-flex;flex-direction:column;align-items:center;min-width:26px;font:600 12px var(--f-mono);border:1px solid var(--line);border-radius:0;padding:1px 3px;line-height:1.15}
 .adbinfo .sg small{font:400 10px var(--f-body);color:var(--muted)}
 .adbinfo .sg.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .adbinfo .sg.on small{color:var(--accent-ink)}
@@ -197,7 +193,7 @@ tbody tr:hover td{background:color-mix(in srgb,var(--sunk) 55%,transparent)}
 .adbinfo .lbl{font-weight:600;min-width:48px;color:var(--muted)}
 .adbinfo .tg{margin-top:4px}
 .adbinfo .res-f{color:var(--fail);font-weight:600}.adbinfo .res-p{color:var(--pass);font-weight:600}.adbinfo .res-n{color:var(--info)}
-.pill{display:inline-block;font:600 13px var(--f-body);border-radius:4px}
+.pill{display:inline-block;font:600 13px var(--f-body);border-radius:0}
 .pill.p{color:var(--pass)}
 .pill.f{background:var(--fail);color:#fff;padding:1px 8px}
 .pill.i{color:var(--info);font-weight:400}
@@ -226,10 +222,7 @@ tr.fail td:first-child{box-shadow:inset 3px 0 0 var(--fail)}
 .json>summary:hover{color:var(--accent)}
 .json:not([open]) .chev{transform:rotate(-45deg)}
 .json .jb{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}
-footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
-footer a{color:inherit;text-decoration:underline;text-underline-offset:2px}
-footer a:hover{color:var(--ink)}
-.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:6px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:0;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
 .toast.show{opacity:1}
 
 @media (max-width:1180px){
@@ -252,29 +245,65 @@ footer a:hover{color:var(--ink)}
   .perf>div+div{border-left:0;border-top:1px solid var(--line-soft)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- beamKit integration ---------- */
+body{font-size:14px}
+.wrap.app{max-width:var(--page-max,1584px);margin:0 auto;display:flex;flex-direction:column;gap:16px;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+aside{position:sticky;top:64px;max-height:calc(100vh - 80px)}
+input,select{background:var(--sunk);border:0;border-bottom:1px solid var(--cds-border-strong,#8d8d8d)}
+input[type=checkbox],input[type=radio],input[type=range],input[type=file]{border:0;background:none}
+input[type=number]{font-family:var(--f-mono);font-size:13px}
+input:hover,select:hover{background:var(--cds-layer-hover-01,#f7f9fc)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--cds-focus,#0f62fe);outline-offset:-2px}
+.btn{min-height:32px}
+.btn.primary:hover{filter:none;background:var(--cds-button-primary-hover,#0353e9)}
+.seg{border:0}
+.seg button+button{border-left:0}
+.drop{margin:0}
+.legend{margin:0}
+.st{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;font-size:13px!important;color:var(--muted)}
+.kv b{text-transform:uppercase;letter-spacing:.06em;font-size:11.5px}
+details.fold[open]>summary .chev,details.json[open]>summary .chev,details.sec[open]>summary .chev{transform:rotate(45deg) translate(-2px,-2px)}
+footer.bk a{color:var(--cds-link-primary)}
+th.num{font-family:var(--f-body)}
+.chip.ex,.chip.warn{color:var(--cds-info-text,#0043ce)}
+.chip.warn{background:var(--cds-warn-bg,#fcf4d6);color:var(--cds-warn-text,#8e6a00)}
+.btn.link{color:var(--cds-link-primary,#0f62fe);border-color:var(--cds-link-primary,#0f62fe)}
+.beam .beamdetail{color:var(--cds-link-primary,#0f62fe)}
 </style>
 </head>
 <body>
+<a class="skip" href="#results">Skip to results</a>
+<div class="shell">
+  <div class="wrap">
+    <a class="shell-name" href="https://jalibakthermk.github.io/"><img src="favicon.svg" alt="" width="24" height="24"> Road-illuminate <span class="crumb">· Jalib Akther</span></a>
+    <div class="shell-actions">
+      <a href="https://jalibakthermk.github.io/" title="All projects"><svg class="i"><use href="#icon-grid"/></svg> <span class="lbl">Projects</span></a>
+      <a href="https://github.com/jalibakthermk/Road-illuminate" title="Source code"><svg class="i"><use href="#icon-github"/></svg> <span class="lbl">Code</span></a>
+      <button type="button" data-bk-theme aria-label="Toggle light and dark theme" title="Toggle light / dark">
+        <svg class="i sun"><use href="#icon-sun"/></svg><svg class="i moon"><use href="#icon-moon"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
 
-<div class="wrap">
+<header class="titleband">
+  <svg class="motif" viewBox="0 0 640 200" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+    <ellipse cx="420" cy="140" rx="210" ry="56"/><ellipse cx="420" cy="140" rx="150" ry="40"/><ellipse cx="420" cy="140" rx="92" ry="25"/><ellipse cx="420" cy="140" rx="44" ry="12"/>
+    <path class="cut" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M0 140H330L366 104H640"/>
+  </svg>
+  <div class="wrap">
+    <p class="eyebrow">Headlamps · road illuminance · HSPR vertical-planes method</p>
+    <h1><b>Road-illuminate</b> Headlamp road illuminance</h1>
+    <p class="sub">Road illuminance from IES H-V photometry: mounting height, aim, toe, pitch and roll, lane markings, extra lamp pairs and customer requirement checks.</p>
+    <span class="privacy"><svg class="i"><use href="#icon-lock"/></svg> Files are processed locally in your browser — nothing is uploaded.</span>
+  </div>
+</header>
+
+<div class="wrap app">
 <div class="bench">
 <aside aria-label="Lamp, mounting and road settings">
-  <header>
-  <div class="brand">
-    <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
-      <defs><clipPath id="logoClip"><rect width="48" height="48" rx="9"/></clipPath></defs>
-      <g clip-path="url(#logoClip)"><rect width="48" height="48" fill="#0c1016"/>
-      <path d="M7 48V0M41 48V0" stroke="#3a4450" stroke-width="1"/><path d="M24 48V0" stroke="#c9a640" stroke-width="1" stroke-dasharray="3 3"/>
-      <path d="M32 48C6 46 4 34 12 22L22 18L36 2C46 10 48 38 32 48Z" fill="#1d63b8"/>
-      <path d="M32 48C11 45 9 35 15 26L23 23L35 10C43 17 44 38 32 48Z" fill="#17a6a8"/>
-      <path d="M32 48C15 45 14 36 18 30L24 28L34 18C40 24 40 39 32 48Z" fill="#4cbf55"/>
-      <path d="M32 48C19 45 18 38 21 34L26 32L33 26C37 31 37 41 32 48Z" fill="#e2d42e"/>
-      <ellipse cx="30.5" cy="40" rx="6" ry="4.2" fill="#f28c1a"/>
-      <ellipse cx="31" cy="39.6" rx="2.8" ry="2" fill="#e8402a"/></g>
-    </svg>
-    <h1>Road Illuminate</h1>
-  </div>
-  </header>
   <div class="rail-body">
 
   <div class="lampcard">
@@ -415,7 +444,7 @@ footer a:hover{color:var(--ink)}
   </div>
 </aside>
 
-<main>
+<main id="results">
   <section class="summary" id="summary" aria-label="Result summary"></section>
 
   <section class="screen" aria-labelledby="plot-h">
@@ -482,9 +511,16 @@ footer a:hover{color:var(--ink)}
 </main>
 </div>
 
-<footer>
-  <span>© 2026 Jalib Akther · Released under the <a href="https://github.com/jalibakthermk/Road-illuminate/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a></span>
-</footer>
+</div>
+<div class="wrap foot">
+  <footer class="bk">
+    <span>Road-illuminate</span>
+    <span>© 2026 Jalib Akther</span>
+    <span><svg class="i"><use href="#icon-pin"/></svg> Thrissur, India</span>
+    <span><a href="https://github.com/jalibakthermk/Road-illuminate/blob/main/LICENSE">MIT License</a></span>
+    <a href="https://jalibakthermk.github.io/">More lighting tools →</a>
+    <span class="disc">Results are engineering estimates; check them against measured data before relying on them.</span>
+  </footer>
 </div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -1413,6 +1449,8 @@ $("#adbFrame").addEventListener("input",e=>{adbStop(); adbSetFrame(+e.target.val
 $("#adbPlay").addEventListener("click",adbTogglePlay);
 
 new ResizeObserver(()=>schedule()).observe($(".cv"));
+// beamKit theme toggle: redraw the plot so pass/fail colours follow the theme
+document.addEventListener("DOMContentLoaded",()=>{ if(window.beamKit) beamKit.theme.onChange(()=>schedule()); });
 renderPairs();
 for(const [id,v] of [["#mVert","hspr"],["#mRoad","road"]]) $(id).addEventListener("click",()=>{const sel=$("#method"); if(sel.value===v)return; sel.value=v; sel.dispatchEvent(new Event("change"));});
 $("#xmaxSel").addEventListener("change",e=>{if(e.target.value==="custom")return; S.xmax=+e.target.value; $("#xmax").value=S.xmax; schedule(true);});
