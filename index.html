@@ -44,7 +44,7 @@ h1,h2{text-wrap:balance}
 
 /* ---- control rail ---- */
 aside{background:var(--surface);border:1px solid var(--line);border-radius:0;min-width:0;display:flex;flex-direction:column;
-  position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:hidden}
+  position:sticky;top:64px;max-height:calc(100vh - 80px);overflow:hidden}
 .brand{display:flex;align-items:center;gap:10px}
 .logo{width:32px;height:32px;flex:none}
 .rail-body{overflow-y:auto;overscroll-behavior:contain;padding:14px 14px 10px;display:flex;flex-direction:column;gap:14px;min-height:0}
@@ -250,7 +250,6 @@ tr.fail td:first-child{box-shadow:inset 3px 0 0 var(--fail)}
 body{font-size:14px}
 .wrap.app{max-width:var(--page-max,1584px);margin:0 auto;display:flex;flex-direction:column;gap:16px;
   padding:16px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
-aside{position:sticky;top:64px;max-height:calc(100vh - 80px)}
 input,select{background:var(--sunk);border:0;border-bottom:1px solid var(--cds-border-strong,#8d8d8d)}
 input[type=checkbox],input[type=radio],input[type=range],input[type=file]{border:0;background:none}
 input[type=number]{font-family:var(--f-mono);font-size:13px}
