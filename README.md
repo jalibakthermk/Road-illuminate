@@ -365,6 +365,7 @@ The flux in the file is found by integrating I over the measured range. The soli
 
 | Date | Change |
 | --- | --- |
+| 2026-11-25 | Web tool: flux solid angle option, as in HSPRevaluate. "Flat cell (as HSPR)", the default, counts dH·dV; "Exact, with cos V" weights each cell by cos V. Only the flux figure changes. |
 | 2026-11-22 | Web tool: load an ADB scenario exported by adbSim. Each lamp becomes low beam + weighted ADB segments per frame; targets and glare points are drawn on the plot; frame slider and playback for moving targets. |
 | 2026-11-17 | Web tool: each additional lamp pair can take separate left and right IES files. New customer check `maxrange`: the farthest distance an isolux line reaches at any lateral position within a chosen window. |
 | 2026-11-17 | Web tool: additional lamp pairs are now shown as tabs, with a + button to add a pair. |

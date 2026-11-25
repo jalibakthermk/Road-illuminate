@@ -386,6 +386,7 @@ th.num{font-family:var(--f-body)}
       </div>
       <div class="row2">
         <label class="f">Intensity factor<div class="inp"><input type="number" id="scale" step="0.05" min="0"><span class="u">×</span></div></label>
+        <label class="f">Flux solid angle<select id="fluxM"><option value="flat">Flat cell (as HSPR)</option><option value="cosV">Exact, with cos V</option></select></label>
       </div>
     </div>
   </details>
@@ -577,10 +578,12 @@ function intensity(L,H,V){
   const c=L.cd, a=i*nv+j, b=(i+1)*nv+j;
   return (1-th)*(1-tv)*c[a]+th*(1-tv)*c[b]+(1-th)*tv*c[a+1]+th*tv*c[b+1];
 }
-function flux(L,sys){
-  const dh=0.5,dv=0.25; let s=0;
+/* Luminous flux over the file's angular range. cosV: each cell counts cos V·dH·dV (the exact solid angle);
+   flat: dH·dV with no cos term, as the HSPR reference method (a few tenths of a percent higher for headlamp beams). */
+function flux(L,sys,mode){
+  const dh=0.5,dv=0.25, cw=mode!=="flat"; let s=0;
   for(let H=L.Hs[0]+dh/2;H<L.Hs[L.Hs.length-1];H+=dh) for(let V=L.Vs[0]+dv/2;V<L.Vs[L.Vs.length-1];V+=dv)
-    s+=intensity(L,H,V)*Math.cos((sys==="azel"?V:H)*D2R);
+    s+=intensity(L,H,V)*(cw?Math.cos((sys==="azel"?V:H)*D2R):1);
   return s*dh*dv*D2R*D2R;
 }
 
@@ -635,7 +638,7 @@ function sampleIES(){
 
 /* ------------------------------------------------------------------ state */
 const DEFAULT={
-  method:"hspr",evalH:0,aimUnit:"deg",height:0.65,sep:1.4,aim:-0.57,toe:0,pitch:0,roll:0,pivot:-2.7,scale:1,angleSys:"azel",only:"both",mirrorRight:false,mirrorAll:false,
+  method:"hspr",evalH:0,aimUnit:"deg",height:0.65,sep:1.4,aim:-0.57,toe:0,pitch:0,roll:0,pivot:-2.7,scale:1,angleSys:"azel",fluxM:"flat",only:"both",mirrorRight:false,mirrorAll:false,
   side:"RHT",laneW:3.5,ownN:1,oppN:1,vehLane:1,laneOff:0,centre:"dashed",centreCol:"white",
   xmax:150,yfit:"road",ymin:-6,ymax:9,levels:"0.5, 1, 3, 5, 10, 20, 50, 100",thr:"1, 3",widthX:"10, 20, 30, 50",
   showContours:true,showReqs:true,markings:null,reqs:null,reqsExample:true,pairs:[]
@@ -1104,7 +1107,7 @@ function renderPairs(){
     </div>`;}).join("");
 }
 function renderInfo(){
-  const meta=(raw,P)=>{if(!raw)return ""; const H=P.Hs,V=P.Vs; return `Type ${raw.ptype===2?"B":raw.ptype===3?"A":raw.ptype} · H ${fmt(H[0],1)}…${fmt(H[H.length-1],1)}° (${H.length}) · V ${fmt(V[0],1)}…${fmt(V[V.length-1],1)}° (${V.length})<br>peak ${Math.round(P.peak).toLocaleString()} cd at H ${fmt(P.pH,1)}°, V ${fmt(P.pV,2)}° · flux ${Math.round(flux(P,S.angleSys))} lm`;};
+  const meta=(raw,P)=>{if(!raw)return ""; const H=P.Hs,V=P.Vs; return `Type ${raw.ptype===2?"B":raw.ptype===3?"A":raw.ptype} · H ${fmt(H[0],1)}…${fmt(H[H.length-1],1)}° (${H.length}) · V ${fmt(V[0],1)}…${fmt(V[V.length-1],1)}° (${V.length})<br>peak ${Math.round(P.peak).toLocaleString()} cd at H ${fmt(P.pH,1)}°, V ${fmt(P.pV,2)}° · flux ${Math.round(flux(P,S.angleSys,S.fluxM))} lm${S.fluxM==="cosV"?" (cos V)":""}`;};
   $("#nameL").textContent=rawL.sample?"Sample beam loaded · drop an .ies file here":rawL.name; $("#metaL").innerHTML=meta(rawL,PL);
   $("#nameR").textContent=rawR?rawR.name:S.mirrorRight?"Left file, mirrored":"Uses the left file";
   $("#metaR").innerHTML=rawR?meta(rawR,PR):""; $("#clearR").hidden=!rawR;
@@ -1296,7 +1299,7 @@ function run(){
 
 /* ------------------------------------------------------------------ bind controls */
 const NUM=["evalH","height","sep","aim","toe","pitch","roll","pivot","scale","laneW","ownN","oppN","vehLane","laneOff","xmax","ymin","ymax"];
-const SEL=["method","aimUnit","angleSys","only","side","centre","centreCol","yfit"], TXT=["levels","thr","widthX"], CHK=["mirrorRight","mirrorAll","showContours","showReqs"];
+const SEL=["method","aimUnit","angleSys","fluxM","only","side","centre","centreCol","yfit"], TXT=["levels","thr","widthX"], CHK=["mirrorRight","mirrorAll","showContours","showReqs"];
 const ROAD=new Set(["side","laneW","ownN","oppN","vehLane","laneOff","centre","centreCol"]);
 NUM.forEach(k=>{const el=$("#"+k); el.value=S[k]; el.addEventListener("input",()=>{const v=parseFloat(el.value); if(!Number.isFinite(v))return; S[k]=v;
   if(k==="ymin"||k==="ymax"){S.yfit="manual"; $("#yfit").value="manual";}

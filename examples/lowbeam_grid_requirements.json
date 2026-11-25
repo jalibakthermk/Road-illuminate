@@ -1,0 +1,332 @@
+[
+  {
+    "label": "Low beam 5 m, 3.81 m right",
+    "type": "point",
+    "x": 5,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 5 m, centre",
+    "type": "point",
+    "x": 5,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 5 m, 3.81 m left",
+    "type": "point",
+    "x": 5,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 10 m, 3.81 m right",
+    "type": "point",
+    "x": 10,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 10 m, centre",
+    "type": "point",
+    "x": 10,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 10 m, 3.81 m left",
+    "type": "point",
+    "x": 10,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 20 m, 3.81 m right",
+    "type": "point",
+    "x": 20,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 20 m, centre",
+    "type": "point",
+    "x": 20,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 20 m, 3.81 m left",
+    "type": "point",
+    "x": 20,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 30 m, 3.81 m right",
+    "type": "point",
+    "x": 30,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 30 m, centre",
+    "type": "point",
+    "x": 30,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 30 m, 3.81 m left",
+    "type": "point",
+    "x": 30,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 40 m, 3.81 m right",
+    "type": "point",
+    "x": 40,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 40 m, centre",
+    "type": "point",
+    "x": 40,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 40 m, 3.81 m left",
+    "type": "point",
+    "x": 40,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 50 m, 3.81 m right",
+    "type": "point",
+    "x": 50,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 50 m, centre",
+    "type": "point",
+    "x": 50,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 50 m, 3.81 m left",
+    "type": "point",
+    "x": 50,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 60 m, 3.81 m right",
+    "type": "point",
+    "x": 60,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 60 m, centre",
+    "type": "point",
+    "x": 60,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 60 m, 3.81 m left",
+    "type": "point",
+    "x": 60,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 70 m, 3.81 m right",
+    "type": "point",
+    "x": 70,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 70 m, centre",
+    "type": "point",
+    "x": 70,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 70 m, 3.81 m left",
+    "type": "point",
+    "x": 70,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 80 m, 3.81 m right",
+    "type": "point",
+    "x": 80,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 80 m, centre",
+    "type": "point",
+    "x": 80,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 80 m, 3.81 m left",
+    "type": "point",
+    "x": 80,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "Low beam 2 lx range, 3.81 m right",
+    "type": "range",
+    "y": -3.81,
+    "thr": 2,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  },
+  {
+    "label": "Low beam 2 lx range, centre",
+    "type": "range",
+    "y": 0,
+    "thr": 2,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  },
+  {
+    "label": "Low beam 2 lx range, 3.81 m left",
+    "type": "range",
+    "y": 3.81,
+    "thr": 2,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  },
+  {
+    "label": "Low beam 5 lx range, 3.81 m right",
+    "type": "range",
+    "y": -3.81,
+    "thr": 5,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  },
+  {
+    "label": "Low beam 5 lx range, centre",
+    "type": "range",
+    "y": 0,
+    "thr": 5,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  },
+  {
+    "label": "Low beam 5 lx range, 3.81 m left",
+    "type": "range",
+    "y": 3.81,
+    "thr": 5,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, low beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  }
+]

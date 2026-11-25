@@ -1,0 +1,632 @@
+[
+  {
+    "label": "High beam 5 m, 3.81 m right",
+    "type": "point",
+    "x": 5,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 5 m, centre",
+    "type": "point",
+    "x": 5,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 5 m, 3.81 m left",
+    "type": "point",
+    "x": 5,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 10 m, 3.81 m right",
+    "type": "point",
+    "x": 10,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 10 m, centre",
+    "type": "point",
+    "x": 10,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 10 m, 3.81 m left",
+    "type": "point",
+    "x": 10,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 20 m, 3.81 m right",
+    "type": "point",
+    "x": 20,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 20 m, centre",
+    "type": "point",
+    "x": 20,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 20 m, 3.81 m left",
+    "type": "point",
+    "x": 20,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 30 m, 3.81 m right",
+    "type": "point",
+    "x": 30,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 30 m, centre",
+    "type": "point",
+    "x": 30,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 30 m, 3.81 m left",
+    "type": "point",
+    "x": 30,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 40 m, 3.81 m right",
+    "type": "point",
+    "x": 40,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 40 m, centre",
+    "type": "point",
+    "x": 40,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 40 m, 3.81 m left",
+    "type": "point",
+    "x": 40,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 50 m, 3.81 m right",
+    "type": "point",
+    "x": 50,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 50 m, centre",
+    "type": "point",
+    "x": 50,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 50 m, 3.81 m left",
+    "type": "point",
+    "x": 50,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 60 m, 3.81 m right",
+    "type": "point",
+    "x": 60,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 60 m, centre",
+    "type": "point",
+    "x": 60,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 60 m, 3.81 m left",
+    "type": "point",
+    "x": 60,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 70 m, 3.81 m right",
+    "type": "point",
+    "x": 70,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 70 m, centre",
+    "type": "point",
+    "x": 70,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 70 m, 3.81 m left",
+    "type": "point",
+    "x": 70,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 80 m, 3.81 m right",
+    "type": "point",
+    "x": 80,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 80 m, centre",
+    "type": "point",
+    "x": 80,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 80 m, 3.81 m left",
+    "type": "point",
+    "x": 80,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 90 m, 3.81 m right",
+    "type": "point",
+    "x": 90,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 90 m, centre",
+    "type": "point",
+    "x": 90,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 90 m, 3.81 m left",
+    "type": "point",
+    "x": 90,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 100 m, 3.81 m right",
+    "type": "point",
+    "x": 100,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 100 m, centre",
+    "type": "point",
+    "x": 100,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 100 m, 3.81 m left",
+    "type": "point",
+    "x": 100,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 110 m, 3.81 m right",
+    "type": "point",
+    "x": 110,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 110 m, centre",
+    "type": "point",
+    "x": 110,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 110 m, 3.81 m left",
+    "type": "point",
+    "x": 110,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 120 m, 3.81 m right",
+    "type": "point",
+    "x": 120,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 120 m, centre",
+    "type": "point",
+    "x": 120,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 120 m, 3.81 m left",
+    "type": "point",
+    "x": 120,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 130 m, 3.81 m right",
+    "type": "point",
+    "x": 130,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 130 m, centre",
+    "type": "point",
+    "x": 130,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 130 m, 3.81 m left",
+    "type": "point",
+    "x": 130,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 140 m, 3.81 m right",
+    "type": "point",
+    "x": 140,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 140 m, centre",
+    "type": "point",
+    "x": 140,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 140 m, 3.81 m left",
+    "type": "point",
+    "x": 140,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 150 m, 3.81 m right",
+    "type": "point",
+    "x": 150,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 150 m, centre",
+    "type": "point",
+    "x": 150,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 150 m, 3.81 m left",
+    "type": "point",
+    "x": 150,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 160 m, 3.81 m right",
+    "type": "point",
+    "x": 160,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 160 m, centre",
+    "type": "point",
+    "x": 160,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 160 m, 3.81 m left",
+    "type": "point",
+    "x": 160,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 170 m, 3.81 m right",
+    "type": "point",
+    "x": 170,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 170 m, centre",
+    "type": "point",
+    "x": 170,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 170 m, 3.81 m left",
+    "type": "point",
+    "x": 170,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 180 m, 3.81 m right",
+    "type": "point",
+    "x": 180,
+    "y": -3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 180 m, centre",
+    "type": "point",
+    "x": 180,
+    "y": 0,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 180 m, 3.81 m left",
+    "type": "point",
+    "x": 180,
+    "y": 3.81,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required lux"
+  },
+  {
+    "label": "High beam 2 lx range, 3.81 m right",
+    "type": "range",
+    "y": -3.81,
+    "thr": 2,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  },
+  {
+    "label": "High beam 2 lx range, centre",
+    "type": "range",
+    "y": 0,
+    "thr": 2,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  },
+  {
+    "label": "High beam 2 lx range, 3.81 m left",
+    "type": "range",
+    "y": 3.81,
+    "thr": 2,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  },
+  {
+    "label": "High beam 5 lx range, 3.81 m right",
+    "type": "range",
+    "y": -3.81,
+    "thr": 5,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  },
+  {
+    "label": "High beam 5 lx range, centre",
+    "type": "range",
+    "y": 0,
+    "thr": 5,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  },
+  {
+    "label": "High beam 5 lx range, 3.81 m left",
+    "type": "range",
+    "y": 3.81,
+    "thr": 5,
+    "op": ">=",
+    "limit": null,
+    "source": "customer grid, high beam",
+    "note": "Limit not given on the sheet; fill in the required range in m"
+  }
+]
